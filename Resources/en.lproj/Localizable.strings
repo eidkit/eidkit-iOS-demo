@@ -1,0 +1,130 @@
+/* App */
+"app_name" = "EidKit";
+
+/* Home screen */
+"home_title" = "EidKit";
+"home_subtitle" = "The first Romanian app for reading, signing and authenticating with the electronic identity card.";
+"home_feature_kyc_title" = "KYC Read";
+"home_feature_kyc_description" = "Read identity, photo, and verify document authenticity.";
+"home_feature_auth_title" = "Authentication";
+"home_feature_auth_description" = "Passwordless login — verify chip genuineness with active authentication.";
+"home_feature_signing_title" = "Document Signing";
+"home_feature_signing_description" = "Pick a PDF, sign it with the card's nonRepudiation key, and save the signed document.";
+"home_try_it" = "Try it";
+"tab_kyc" = "KYC";
+"tab_signing" = "Signing";
+"tab_auth" = "Auth";
+
+/* Common labels */
+"label_can" = "Card Access Number (CAN) — 6 digits";
+"label_can_hint" = "6 digits printed on the front";
+"label_auth_pin" = "Authentication PIN — 4 digits";
+"label_auth_pin_hint" = "4-digit PIN";
+"label_signing_pin" = "Signing PIN — 6 digits";
+"label_signing_pin_hint" = "6-digit PIN";
+
+/* NFC sheet */
+"nfc_alert_read" = "Hold your Romanian ID card to the back of your iPhone";
+"nfc_alert_sign" = "Hold your Romanian ID card to the back of your iPhone to sign";
+"nfc_prompt_title" = "Hold card to phone";
+"nfc_prompt_body" = "Place the back of your Romanian ID against the NFC antenna";
+
+/* KYC screen */
+"kyc_title" = "KYC Read";
+"kyc_include_photo" = "Include photo (~7s)";
+"kyc_include_signature" = "Include signature image (~1.5s)";
+"kyc_export_generating" = "Generating PDF…";
+"kyc_export_saved" = "Saved — tap to open";
+"kyc_export_error" = "Could not save PDF: %@";
+
+/* Auth screen */
+"auth_title" = "Authentication";
+"auth_pin_hint" = "This is the 4-digit PIN set during card activation at MAI (not the signing PIN)";
+
+/* Signing screen */
+"signing_title" = "Document Signing";
+"signing_pick_pdf_title" = "Select a PDF to Sign";
+"signing_pick_pdf_description" = "The app computes a SHA-384 hash of the PDF and signs it with your card's nonRepudiation key.";
+"signing_pick_pdf_button" = "Pick PDF from device";
+"signing_document_selected" = "Document selected";
+"signing_hash_label" = "SHA-384 (first 24 hex)";
+"signing_change_document" = "Change document";
+"signing_awaiting_output" = "Saving signed PDF…";
+"signing_success_saved" = "Signed PDF saved";
+"signing_success_open" = "Open signed PDF";
+"signing_filename_prefix" = "signed";
+
+/* Wizard step labels */
+"step_connecting" = "Connecting to card";
+"step_establishing_pace" = "Establishing secure channel";
+"step_reading_photo" = "Reading photo";
+"step_reading_signature_image" = "Reading signature image";
+"step_verifying_passive_auth" = "Verifying document";
+"step_verifying_pin" = "Verifying PIN";
+"step_reading_identity" = "Reading identity";
+"step_verifying_active_auth" = "Verifying chip";
+"step_signing_document" = "Signing document";
+
+/* Result labels */
+"result_passive_auth_valid" = "Document authentic";
+"result_passive_auth_invalid" = "Document invalid";
+"result_passive_auth_not_supported_label" = "Document validity";
+"result_passive_auth_not_supported_value" = "Not supported by card";
+"result_active_auth_verified" = "Chip genuine";
+"result_active_auth_failed" = "Chip verification failed";
+"result_dsc_subject_label" = "Document cert";
+"result_issuer_label" = "Issued by";
+"result_chip_cert_label" = "Chip cert";
+"result_cnp_label" = "CNP";
+"result_dob_label" = "Date of birth";
+"result_nationality_label" = "Nationality";
+"result_birthplace_label" = "Birthplace";
+"result_address_label" = "Address";
+"result_document_label" = "Document number";
+"result_issue_date_label" = "Issue date";
+"result_expiry_label" = "Expires";
+"result_issuing_authority_label" = "Issuing authority";
+"result_signature_image_label" = "Handwritten signature";
+"result_claim_ready" = "Identity claim ready for backend verification";
+"result_key_usage_label" = "Key usage";
+"key_usage_digital_signature" = "Digital signature";
+"key_usage_non_repudiation" = "Non-repudiation (signing)";
+"result_signature_label" = "Signature (raw r||s, hex)";
+
+/* Actions */
+"action_scan_card" = "Scan Card";
+"action_try_again" = "Try Again";
+"action_back" = "Back";
+"action_copy" = "Copy";
+"action_export_pdf" = "Export to PDF";
+
+/* PDF report */
+"pdf_title" = "KYC Identity Report";
+"pdf_generated" = "Generated: %@";
+"pdf_section_identity" = "Identity";
+"pdf_section_authenticity" = "Document Authenticity";
+"pdf_section_chip" = "Chip Genuineness";
+"pdf_section_signature" = "Handwritten Signature";
+"pdf_field_full_name" = "Full name";
+"pdf_field_cnp" = "CNP";
+"pdf_field_dob" = "Date of birth";
+"pdf_field_nationality" = "Nationality";
+"pdf_field_birthplace" = "Birthplace";
+"pdf_field_doc_no" = "Document no.";
+"pdf_field_issue_date" = "Issue date";
+"pdf_field_expires" = "Expires";
+"pdf_field_issuing_authority" = "Issuing authority";
+"pdf_field_address" = "Address";
+"pdf_field_doc_cert" = "Document cert";
+"pdf_field_issued_by" = "Issued by";
+"pdf_field_chip_cert" = "Chip cert";
+"pdf_ok" = "OK";
+"pdf_fail" = "FAIL";
+
+/* Errors */
+"error_wrong_pin" = "Wrong PIN — %d attempt(s) remaining";
+"error_pin_blocked" = "PIN blocked — visit a MAI service point to unblock";
+"error_card_lost" = "Card moved — hold it steady and try again";
+"error_pace_failed" = "PACE failed — check the CAN and try again";
+"error_generic" = "Error: %@";
+"error_nfc_unavailable" = "NFC is not available or is disabled on this device";

@@ -5,6 +5,13 @@
 ## User settings
 xcuserdata/
 
+## Local XcodeGen overrides (team ID, signing, etc.)
+## Copy local.yml.example to local.yml and fill in your values.
+local.yml
+
+## Generated Xcode project — regenerate with: xcodegen generate
+*.xcodeproj/
+
 ## Obj-C/Swift specific
 *.hmap
 

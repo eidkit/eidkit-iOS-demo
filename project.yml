@@ -1,0 +1,70 @@
+name: EidKitApp
+include:
+  - path: local.yml
+    required: false
+
+options:
+  bundleIdPrefix: ro.eidkit
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+  createIntermediateGroups: true
+
+packages:
+  EidKit:
+    # TODO: switch to remote once 0.1.3 is tagged:
+    # url: https://github.com/eidkit/eidkit-ios-releases
+    # exactVersion: "0.1.3"
+    path: /Users/adela.toma/Watt/eidkit-ios
+
+targets:
+  EidKitApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+        createIntermediateGroups: true
+      - path: Resources
+        createIntermediateGroups: true
+      - path: Sources/Screens/HideKeyboardOnTap.swift
+    entitlements:
+      path: EidKitApp.entitlements
+      properties:
+        com.apple.developer.nfc.readersession.formats: [TAG, PACE]
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        NFCReaderUsageDescription: "NFC is required to scan your identity card."
+        UILaunchStoryboardName: LaunchScreen
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        com.apple.developer.nfc.readersession.iso7816.select-identifiers:
+          - A0000002471001                      # ICAO LDS applet — first so iOS auto-selects ICAO on connect
+          - A000000077030C60000000FE00000500    # National Application (AID1) 16-byte
+          - A000000077030C60000000FE0000050000  # National Application (AID1) 17-byte variant
+          - E828BD080FA0000001674544415441      # EDATA applet
+          - E828BD080FD25047656E65726963        # GenPKI applet
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ro.eidkit.app
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        OTHER_LDFLAGS: $(inherited) -framework EidKit
+    dependencies:
+      - package: EidKit
+        product: EidKit
+        embed: true
+        codeSign: true
+      - package: EidKit
+        product: EidKitOtlp

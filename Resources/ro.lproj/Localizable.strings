@@ -1,0 +1,130 @@
+/* App */
+"app_name" = "EidKit";
+
+/* Home screen */
+"home_title" = "EidKit";
+"home_subtitle" = "Prima aplicație română pentru citire, semnare și autentificare cu cartea de identitate electronică.";
+"home_feature_kyc_title" = "Citire KYC";
+"home_feature_kyc_description" = "Citește identitatea, fotografia și verifică autenticitatea documentului.";
+"home_feature_auth_title" = "Autentificare";
+"home_feature_auth_description" = "Autentificare fără parolă — verifică autenticitatea cipului prin autentificare activă.";
+"home_feature_signing_title" = "Semnare document";
+"home_feature_signing_description" = "Alege un PDF, semnează-l cu cheia nonRepudiere a cardului și salvează documentul semnat.";
+"home_try_it" = "Încearcă";
+"tab_kyc" = "KYC";
+"tab_signing" = "Semnare";
+"tab_auth" = "Auth";
+
+/* Common labels */
+"label_can" = "Număr acces card (CAN) — 6 cifre";
+"label_can_hint" = "6 cifre tipărite pe față";
+"label_auth_pin" = "PIN autentificare — 4 cifre";
+"label_auth_pin_hint" = "PIN 4 cifre";
+"label_signing_pin" = "PIN semnare — 6 cifre";
+"label_signing_pin_hint" = "PIN 6 cifre";
+
+/* NFC sheet */
+"nfc_alert_read" = "Ține cartea de identitate la spatele iPhone-ului";
+"nfc_alert_sign" = "Ține cartea de identitate la spatele iPhone-ului pentru a semna";
+"nfc_prompt_title" = "Apropie cardul de telefon";
+"nfc_prompt_body" = "Ține cartea de identitate la spatele telefonului, lângă antena NFC";
+
+/* KYC screen */
+"kyc_title" = "Citire KYC";
+"kyc_include_photo" = "Include fotografie (~7s)";
+"kyc_include_signature" = "Include imaginea semnăturii (~1.5s)";
+"kyc_export_generating" = "Se generează PDF…";
+"kyc_export_saved" = "Salvat — apasă pentru a deschide";
+"kyc_export_error" = "Nu s-a putut salva PDF-ul: %@";
+
+/* Auth screen */
+"auth_title" = "Autentificare";
+"auth_pin_hint" = "Acesta este PIN-ul de 4 cifre setat la activarea cardului la MAI (nu PIN-ul de semnare)";
+
+/* Signing screen */
+"signing_title" = "Semnare document";
+"signing_pick_pdf_title" = "Selectează un PDF de semnat";
+"signing_pick_pdf_description" = "Aplicația calculează un hash SHA-384 al PDF-ului și îl semnează cu cheia nonRepudiere a cardului.";
+"signing_pick_pdf_button" = "Alege PDF de pe dispozitiv";
+"signing_document_selected" = "Document selectat";
+"signing_hash_label" = "SHA-384 (primele 24 hex)";
+"signing_change_document" = "Schimbă documentul";
+"signing_awaiting_output" = "Se salvează PDF-ul semnat…";
+"signing_success_saved" = "PDF semnat salvat";
+"signing_success_open" = "Deschide PDF semnat";
+"signing_filename_prefix" = "semnat";
+
+/* Wizard step labels */
+"step_connecting" = "Conectare la card";
+"step_establishing_pace" = "Stabilire canal securizat";
+"step_reading_photo" = "Citire fotografie";
+"step_reading_signature_image" = "Citire imagine semnătură";
+"step_verifying_passive_auth" = "Verificare document";
+"step_verifying_pin" = "Verificare PIN";
+"step_reading_identity" = "Citire identitate";
+"step_verifying_active_auth" = "Verificare cip";
+"step_signing_document" = "Semnare document";
+
+/* Result labels */
+"result_passive_auth_valid" = "Document autentic";
+"result_passive_auth_invalid" = "Document invalid";
+"result_passive_auth_not_supported_label" = "Valabilitate document";
+"result_passive_auth_not_supported_value" = "Nesuportat de card";
+"result_active_auth_verified" = "Cip autentic";
+"result_active_auth_failed" = "Verificare cip eșuată";
+"result_dsc_subject_label" = "Certificat document";
+"result_issuer_label" = "Emis de";
+"result_chip_cert_label" = "Certificat cip";
+"result_cnp_label" = "CNP";
+"result_dob_label" = "Data nașterii";
+"result_nationality_label" = "Naționalitate";
+"result_birthplace_label" = "Loc naștere";
+"result_address_label" = "Adresă";
+"result_document_label" = "Număr document";
+"result_issue_date_label" = "Data emiterii";
+"result_expiry_label" = "Valabil până";
+"result_issuing_authority_label" = "Autoritate emitentă";
+"result_signature_image_label" = "Semnătură olografă";
+"result_claim_ready" = "Identity claim pregătit pentru verificare backend";
+"result_key_usage_label" = "Utilizare cheie";
+"key_usage_digital_signature" = "Semnătură digitală";
+"key_usage_non_repudiation" = "Nerepudiere (semnare)";
+"result_signature_label" = "Semnătură (r||s brut, hex)";
+
+/* Actions */
+"action_scan_card" = "Scanează cardul";
+"action_try_again" = "Încearcă din nou";
+"action_back" = "Înapoi";
+"action_copy" = "Copiază";
+"action_export_pdf" = "Exportă PDF";
+
+/* PDF report */
+"pdf_title" = "Raport Identitate KYC";
+"pdf_generated" = "Generat: %@";
+"pdf_section_identity" = "Identitate";
+"pdf_section_authenticity" = "Autenticitate document";
+"pdf_section_chip" = "Autenticitate cip";
+"pdf_section_signature" = "Semnătură olografă";
+"pdf_field_full_name" = "Nume complet";
+"pdf_field_cnp" = "CNP";
+"pdf_field_dob" = "Data nașterii";
+"pdf_field_nationality" = "Naționalitate";
+"pdf_field_birthplace" = "Loc naștere";
+"pdf_field_doc_no" = "Nr. document";
+"pdf_field_issue_date" = "Data emiterii";
+"pdf_field_expires" = "Valabil până";
+"pdf_field_issuing_authority" = "Autoritate emitentă";
+"pdf_field_address" = "Adresă";
+"pdf_field_doc_cert" = "Certificat document";
+"pdf_field_issued_by" = "Emis de";
+"pdf_field_chip_cert" = "Certificat cip";
+"pdf_ok" = "OK";
+"pdf_fail" = "EȘUAT";
+
+/* Errors */
+"error_wrong_pin" = "PIN greșit — mai rămân %d încercări";
+"error_pin_blocked" = "PIN blocat — prezentați-vă la un ghișeu MAI pentru deblocare";
+"error_card_lost" = "Cardul s-a mișcat — țineți-l stabil și încercați din nou";
+"error_pace_failed" = "PACE eșuat — verificați CAN-ul și încercați din nou";
+"error_generic" = "Eroare: %@";
+"error_nfc_unavailable" = "NFC nu este disponibil sau este dezactivat pe acest dispozitiv";

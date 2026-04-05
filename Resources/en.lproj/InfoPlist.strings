@@ -1,0 +1,3 @@
+/* Localized Info.plist keys */
+CFBundleDisplayName = "EidKit";
+CFBundleName = "EidKit";

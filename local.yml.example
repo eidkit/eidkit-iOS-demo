@@ -1,0 +1,7 @@
+# Copy this file to local.yml (gitignored) and set your Apple Developer Team ID.
+# Find it at: https://developer.apple.com/account -> Membership -> Team ID
+targets:
+  EidKitApp:
+    settings:
+      base:
+        DEVELOPMENT_TEAM: YOUR_TEAM_ID
