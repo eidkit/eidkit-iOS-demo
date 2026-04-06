@@ -98,6 +98,15 @@
 "action_copy" = "Copy";
 "action_export_pdf" = "Export to PDF";
 
+/* Demo mode */
+"demo_mode_banner" = "⚠️ DEMO MODE — data shown is not real";
+
+/* CAN tooltip */
+"can_tooltip_hint" = "The CAN is the 6-digit number printed in the lower-right corner of your Romanian ID card.";
+
+/* Signing save */
+"signing_save_pdf" = "Save Signed PDF";
+
 /* PDF report */
 "pdf_title" = "KYC Identity Report";
 "pdf_generated" = "Generated: %@";

@@ -5,15 +5,27 @@ struct PinField: View {
     let label: String
     let maxLength: Int
     @Binding var value: String
+    var helpImageName: String? = nil
     var onComplete: (() -> Void)? = nil
 
     @FocusState private var focused: Bool
+    @State private var showHelp = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(Color.white.opacity(0.6))
+            HStack(spacing: 4) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(Color.white.opacity(0.6))
+                if helpImageName != nil {
+                    Button { showHelp = true } label: {
+                        Image(systemName: "info.circle")
+                            .font(.caption)
+                            .foregroundStyle(Color.electricBlueLight)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
             HStack(spacing: 10) {
                 ForEach(0..<maxLength, id: \.self) { index in
@@ -57,5 +69,34 @@ struct PinField: View {
             )
             .onTapGesture { focused = true }
         }
+        .sheet(isPresented: $showHelp) {
+            if let imageName = helpImageName {
+                VStack(spacing: 16) {
+                    if let img = loadBundleImage(named: imageName) {
+                        Image(uiImage: img)
+                            .resizable()
+                            .scaledToFit()
+                            .padding()
+                    }
+                    Text(String(localized: "can_tooltip_hint"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
+        }
     }
+}
+
+/// Loads a loose bundle resource image (not in asset catalog), trying common extensions.
+private func loadBundleImage(named name: String) -> UIImage? {
+    if let img = UIImage(named: name) { return img }
+    for ext in ["jpg", "jpeg", "png"] {
+        if let path = Bundle.main.path(forResource: name, ofType: ext),
+           let img = UIImage(contentsOfFile: path) { return img }
+    }
+    return nil
 }

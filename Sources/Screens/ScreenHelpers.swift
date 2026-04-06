@@ -1,6 +1,14 @@
 import SwiftUI
 import EidKit
 
+// MARK: - App locale
+
+/// Uses Romanian for any non-English system locale (the app ships en + ro only).
+var appLocale: Locale {
+    let lang = Locale.current.language.languageCode?.identifier ?? "en"
+    return Locale(identifier: lang == "en" ? "en" : "ro")
+}
+
 // MARK: - Date formatting
 
 func formatDob(_ raw: String) -> String {

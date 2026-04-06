@@ -37,7 +37,8 @@ struct ResultCard<Content: View>: View {
                     Text(String(localized: "action_try_again"))
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .tint(Color.electricBlue)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }

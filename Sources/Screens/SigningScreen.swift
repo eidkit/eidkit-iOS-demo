@@ -29,11 +29,9 @@ struct SigningScreen: View {
                 vm.onDocumentSelected(url: url, displayName: url.lastPathComponent)
             }
         }
-        .onChange(of: vm.pendingFileSave) { shouldShow in
-            if shouldShow { showSavePicker = true }
-        }
         .fileMover(isPresented: $showSavePicker,
                    file: tempSignedFile()) { result in
+            vm.onSaveCancelled()
             if case .success(let url) = result {
                 vm.onOutputUrlSelected(url: url)
             }
@@ -50,10 +48,16 @@ struct SigningScreen: View {
         case .scanning(let s):
             SigningScanningContent(state: s)
         case .awaitingOutput:
-            HStack(spacing: 12) {
-                ProgressView().scaleEffect(0.8)
+            VStack(spacing: 16) {
                 Text(String(localized: "signing_awaiting_output"))
                     .font(.subheadline).foregroundStyle(.white)
+                Button {
+                    showSavePicker = true
+                } label: {
+                    Text(String(localized: "signing_save_pdf")).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.electricBlue)
             }
         case .success(let s):
             SigningSuccessContent(state: s, onRetry: { vm.retry(); dismiss() })
@@ -114,36 +118,37 @@ private struct SigningInputContent: View {
     enum Field { case can, pin }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 16) {
             // Selected document card
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(Color.surfaceBorder, lineWidth: 1)
-                .background(Color.surfaceCard.cornerRadius(10))
-                .overlay {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(String(localized: "signing_document_selected"))
-                            .font(.caption).foregroundStyle(Color.white.opacity(0.5))
-                        Text(state.documentName)
-                            .font(.subheadline).foregroundStyle(.white)
-                        Text(String(localized: "signing_hash_label"))
-                            .font(.caption).foregroundStyle(Color.white.opacity(0.5))
-                        Text(state.padesCtx.signedAttrsHash.hexString.prefix(48) + "…")
-                            .font(.caption.monospaced())
-                            .foregroundStyle(Color.white.opacity(0.7))
-                        Button(action: onChangePdf) {
-                            Text(String(localized: "signing_change_document"))
-                        }
-                        .buttonStyle(.bordered)
-                        .padding(.top, 2)
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(String(localized: "signing_document_selected"))
+                    .font(.caption).foregroundStyle(Color.white.opacity(0.5))
+                Text(state.documentName)
+                    .font(.subheadline).foregroundStyle(.white)
+                Text(String(localized: "signing_hash_label"))
+                    .font(.caption).foregroundStyle(Color.white.opacity(0.5))
+                Text(state.padesCtx.signedAttrsHash.hexString.prefix(48) + "…")
+                    .font(.caption.monospaced())
+                    .foregroundStyle(Color.white.opacity(0.7))
+                Button(action: onChangePdf) {
+                    Text(String(localized: "signing_change_document"))
                 }
-                .fixedSize(horizontal: false, vertical: true)
+                .buttonStyle(.bordered)
+                .padding(.top, 2)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.surfaceCard)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(Color.surfaceBorder, lineWidth: 1)
+            )
 
             PinField(label: String(localized: "label_can"),
                      maxLength: 6,
-                     value: Binding(get: { state.can }, set: vm.onCanChange)) {
+                     value: Binding(get: { state.can }, set: vm.onCanChange),
+                     helpImageName: "can_location") {
                 focus = .pin
             }
             .focused($focus, equals: .can)
@@ -155,13 +160,14 @@ private struct SigningInputContent: View {
             .focused($focus, equals: .pin)
 
             if state.canSubmit {
-                NfcPromptView()
-            }
-        }
-        .onChange(of: state.canSubmit) { isValid in
-            if isValid {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                vm.startScan()
+                Button {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    vm.startScan(alertMessage: String(localized: "nfc_alert_sign", locale: appLocale))
+                } label: {
+                    Text(String(localized: "action_scan_card")).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.electricBlue)
             }
         }
     }

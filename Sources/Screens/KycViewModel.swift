@@ -67,30 +67,29 @@ final class KycViewModel: ObservableObject {
         s.includeSignature = v; state = .input(s)
     }
 
-    func startScan() {
-            guard case .input(let s) = state, s.canSubmit else { print("[KycViewModel] startScan: form not valid"); return }
-            print("[KycViewModel] startScan: starting scan with CAN=\(s.can), PIN=\(s.pin)")
+    func startScan(alertMessage: String) {
+        guard case .input(let s) = state, s.canSubmit else { return }
+        let savedInput = s
         state = .scanning(.init(includePhoto: s.includePhoto, includeSignature: s.includeSignature))
         scanTask?.cancel()
         scanTask = Task {
             do {
-                    print("[KycViewModel] EidKit.reader starting...")
-                let result = try await EidKitSdk.reader(can: s.can)
-                    .withPersonalData(pin: s.pin)
+                let result = try await EidKitSdk.reader(can: savedInput.can)
+                    .withPersonalData(pin: savedInput.pin)
                     .withActiveAuth()
-                    .withPhoto(s.includePhoto)
-                    .withSignatureImage(s.includeSignature)
-                    .read { [weak self] event in
+                    .withPhoto(savedInput.includePhoto)
+                    .withSignatureImage(savedInput.includeSignature)
+                    .read(alertMessage: alertMessage) { [weak self] event in
                         guard let self else { return }
                         Task { @MainActor in self.advance(event: event) }
                     }
-                    print("[KycViewModel] EidKit.reader success")
                 state = .success(.init(result: result))
             } catch is CancellationError {
-                    print("[KycViewModel] Scan cancelled")
-                state = .input(.init())
+                state = .input(savedInput)
+            } catch let e as CeiError {
+                if case .cardLost = e { state = .input(savedInput) }
+                else { state = .error(ceiErrorCode(e)) }
             } catch {
-                    print("[KycViewModel] ERROR: \(error)")
                 state = .error(ceiErrorCode(error))
             }
         }

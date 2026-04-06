@@ -41,14 +41,16 @@ private struct AuthInputContent: View {
     enum Field { case can, pin }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 16) {
             Text(String(localized: "auth_pin_hint"))
                 .font(.caption)
                 .foregroundStyle(Color.white.opacity(0.6))
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             PinField(label: String(localized: "label_can"),
                      maxLength: 6,
-                     value: Binding(get: { state.can }, set: vm.onCanChange)) {
+                     value: Binding(get: { state.can }, set: vm.onCanChange),
+                     helpImageName: "can_location") {
                 focus = .pin
             }
             .focused($focus, equals: .can)
@@ -56,21 +58,18 @@ private struct AuthInputContent: View {
 
             PinField(label: String(localized: "label_auth_pin"),
                      maxLength: 4,
-                     value: Binding(get: { state.pin }, set: vm.onPinChange)) {
-                // TODO: enable on real device — vm.startScan()
-            }
+                     value: Binding(get: { state.pin }, set: vm.onPinChange)) { }
             .focused($focus, equals: .pin)
 
             if state.canSubmit {
-                NfcPromptView()
-            }
-        }
-        .onChange(of: state.canSubmit) { isValid in
-            if isValid {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                vm.startScan()
-            } else {
-                vm.cancelScan?()
+                Button {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    vm.startScan(alertMessage: String(localized: "nfc_alert_read", locale: appLocale))
+                } label: {
+                    Text(String(localized: "action_scan_card")).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.electricBlue)
             }
         }
     }

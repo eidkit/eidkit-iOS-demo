@@ -47,38 +47,40 @@ private struct KycInputContent: View {
     enum Field { case can, pin }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 16) {
             PinField(label: String(localized: "label_can"),
-                     maxLength: 6, value: binding(\.can, vm.onCanChange)) {
+                     maxLength: 6, value: binding(\.can, vm.onCanChange),
+                     helpImageName: "can_location") {
                 focus = .pin
             }
             .focused($focus, equals: .can)
             .onAppear { focus = .can }
 
             PinField(label: String(localized: "label_auth_pin"),
-                     maxLength: 4, value: binding(\.pin, vm.onPinChange)) {
-                // TODO: enable on real device — vm.startScan()
-            }
+                     maxLength: 4, value: binding(\.pin, vm.onPinChange)) { }
             .focused($focus, equals: .pin)
 
-            Toggle(String(localized: "kyc_include_photo"), isOn: Binding(
-                get: { state.includePhoto }, set: vm.onPhotoToggle))
-            .toggleStyle(CheckboxToggleStyle())
-            .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(spacing: 8) {
+                Toggle(String(localized: "kyc_include_photo"), isOn: Binding(
+                    get: { state.includePhoto }, set: vm.onPhotoToggle))
+                .toggleStyle(CheckboxToggleStyle())
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            Toggle(String(localized: "kyc_include_signature"), isOn: Binding(
-                get: { state.includeSignature }, set: vm.onSignatureToggle))
-            .toggleStyle(CheckboxToggleStyle())
-            .frame(maxWidth: .infinity, alignment: .leading)
+                Toggle(String(localized: "kyc_include_signature"), isOn: Binding(
+                    get: { state.includeSignature }, set: vm.onSignatureToggle))
+                .toggleStyle(CheckboxToggleStyle())
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
-            // No visual cue when form is valid; scanning starts automatically
-        }
-        .onChange(of: state.canSubmit) { isValid in
-            if isValid {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                vm.startScan()
-            } else {
-                vm.cancelScan?()
+            if state.canSubmit {
+                Button {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    vm.startScan(alertMessage: String(localized: "nfc_alert_read", locale: appLocale))
+                } label: {
+                    Text(String(localized: "action_scan_card")).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.electricBlue)
             }
         }
     }

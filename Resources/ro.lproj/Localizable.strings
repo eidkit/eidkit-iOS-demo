@@ -97,7 +97,14 @@
 "action_back" = "Înapoi";
 "action_copy" = "Copiază";
 "action_export_pdf" = "Exportă PDF";
+/* Demo mode */
+"demo_mode_banner" = "⚠️ MOD DEMO — datele afișate nu sunt reale";
 
+/* CAN tooltip */
+"can_tooltip_hint" = "CAN-ul este numărul de 6 cifre tipărit în colțul dreapta-jos al cărții de identitate.";
+
+/* Signing save */
+"signing_save_pdf" = "Salvează PDF-ul semnat";
 /* PDF report */
 "pdf_title" = "Raport Identitate KYC";
 "pdf_generated" = "Generat: %@";

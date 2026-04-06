@@ -39,7 +39,6 @@ enum SigningState {
 final class SigningViewModel: ObservableObject {
 
     @Published var state: SigningState = .documentPicker
-    @Published var pendingFileSave = false
 
     private let pdfSigner = PdfSigner()
 
@@ -68,28 +67,37 @@ final class SigningViewModel: ObservableObject {
         s.pin = v; state = .input(s)
     }
 
-    func startScan() {
+    func startScan(alertMessage: String) {
         guard case .input(let s) = state, s.canSubmit else { return }
+        let savedInput = s
         state = .scanning(.init())
 
         Task {
             do {
-                let result = try await EidKitSdk.signer(can: s.can)
-                    .sign(hash: s.padesCtx.signedAttrsHash, signingPin: s.pin)
-                    .execute { [weak self] event in
+                let result = try await EidKitSdk.signer(can: savedInput.can)
+                    .sign(hash: savedInput.padesCtx.signedAttrsHash, signingPin: savedInput.pin)
+                    .execute(alertMessage: alertMessage) { [weak self] event in
                         guard let self else { return }
                         Task { @MainActor in self.advance(event: event) }
                     }
                 state = .awaitingOutput(.init(
-                    padesCtx: s.padesCtx,
+                    padesCtx: savedInput.padesCtx,
                     signResult: result,
-                    suggestedFilename: s.padesCtx.suggestedFilename
+                    suggestedFilename: savedInput.padesCtx.suggestedFilename
                 ))
-                pendingFileSave = true
+            } catch is CancellationError {
+                state = .input(savedInput)
+            } catch let e as CeiError {
+                if case .cardLost = e { state = .input(savedInput) }
+                else { state = .error(ceiErrorCode(e)) }
             } catch {
                 state = .error(ceiErrorCode(error))
             }
         }
+    }
+
+    func onSaveCancelled() {
+        // no-op: save picker dismissed without selecting, user stays on awaitingOutput
     }
 
     func onOutputUrlSelected(url: URL) {

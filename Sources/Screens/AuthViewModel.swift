@@ -36,23 +36,26 @@ final class AuthViewModel: ObservableObject {
         s.pin = v; state = .input(s)
     }
 
-    func startScan() {
+    func startScan(alertMessage: String) {
         guard case .input(let s) = state, s.canSubmit else { return }
+        let savedInput = s
         state = .scanning(.init())
         scanTask?.cancel()
         scanTask = Task {
             do {
-                let result = try await EidKitSdk.reader(can: s.can)
-                    .withPersonalData(pin: s.pin)
+                let result = try await EidKitSdk.reader(can: savedInput.can)
+                    .withPersonalData(pin: savedInput.pin)
                     .withActiveAuth()
-                    .read { [weak self] event in
+                    .read(alertMessage: alertMessage) { [weak self] event in
                         guard let self else { return }
                         Task { @MainActor in self.advance(event: event) }
                     }
                 state = .success(result)
             } catch is CancellationError {
-                // Scan cancelled, revert to input
-                state = .input(.init())
+                state = .input(savedInput)
+            } catch let e as CeiError {
+                if case .cardLost = e { state = .input(savedInput) }
+                else { state = .error(ceiErrorCode(e)) }
             } catch {
                 state = .error(ceiErrorCode(error))
             }

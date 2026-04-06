@@ -13,7 +13,6 @@ struct EidKitApp: App
         } catch {
             print("EidKit configuration failed: \(error)")
         }
-        UserDefaults.standard.set(["ro"], forKey: "AppleLanguages")
 
         let surfaceDark = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1)
 
@@ -40,7 +39,7 @@ struct EidKitApp: App
     var body: some Scene {
         WindowGroup {
             HomeScreen()
-                .environment(\.locale, Locale(identifier: "ro"))
+                .environment(\.locale, appLocale)
                 .preferredColorScheme(.dark)
                 .onAppear {
                     // UIWindow.appearance() is ignored by SwiftUI — set it directly after creation
