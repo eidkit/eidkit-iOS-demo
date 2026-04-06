@@ -21,7 +21,7 @@ enum TelemetrySetup {
     static let provider: TracerProviderSdk = {
         let resource = Resource(attributes: [
             "sdk.name":               .string("eidkit-ios"),
-            "sdk.version":            .string("0.1.2"),
+            "sdk.version":            .string("0.1.3"),
             "device.model":           .string(deviceModel),
             "device.os_version":      .string(osVersion),
             "nfc.tech":               .string("IsoDep"),
