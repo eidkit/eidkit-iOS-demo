@@ -4,6 +4,7 @@ import UIKit
 import Foundation
 import OpenTelemetryApi
 import OpenTelemetrySdk
+import EidKit
 import EidKitOtlp
 
 enum TelemetrySetup {
@@ -20,8 +21,9 @@ enum TelemetrySetup {
     // Single provider instance shared between EidKit and any direct app spans.
     static let provider: TracerProviderSdk = {
         let resource = Resource(attributes: [
+            "service.name":           .string("eidkit-ios-demo"),
             "sdk.name":               .string("eidkit-ios"),
-            "sdk.version":            .string("0.1.3"),
+            "sdk.version":            .string("0.1.4"),
             "device.model":           .string(deviceModel),
             "device.os_version":      .string(osVersion),
             "nfc.tech":               .string("IsoDep"),
@@ -39,6 +41,11 @@ enum TelemetrySetup {
     }()
 
     static func makeTracerProvider() -> any TracerProvider { provider }
+
+    /// Adapter that bridges EidKit's onSpan callback into the OTel provider.
+    static let adapter = EidKitSpanAdapter(
+        tracer: provider.get(instrumentationName: "io.eidkit.sdk", instrumentationVersion: "0.1.4")
+    )
 
     /// Fires a single span on app start to verify the full OTel pipeline.
     /// Look for `[EidKitOtlp] HTTP 2xx` in the Xcode console to confirm delivery.

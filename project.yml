@@ -14,10 +14,7 @@ options:
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
-    exactVersion: "0.1.3"
-  OpenTelemetry:
-    url: https://github.com/open-telemetry/opentelemetry-swift-core.git
-    from: "2.3.0"
+    exactVersion: "0.1.4"
 
 targets:
   EidKitApp:
@@ -66,7 +63,3 @@ targets:
         product: EidKit
       - package: EidKit
         product: EidKitOtlp
-      - package: OpenTelemetry
-        product: OpenTelemetryApi
-      - package: OpenTelemetry
-        product: OpenTelemetrySdk

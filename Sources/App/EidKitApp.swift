@@ -7,8 +7,8 @@ struct EidKitApp: App
 {
     init() {
         do {
-            OpenTelemetry.registerTracerProvider(tracerProvider: TelemetrySetup.makeTracerProvider())
-            try EidKitSdk.configure(EidKitConfig())
+            OpenTelemetry.registerTracerProvider(tracerProvider: TelemetrySetup.provider)
+            try EidKitSdk.configure(EidKitConfig(onSpan: TelemetrySetup.adapter.onSpan))
             TelemetrySetup.emitProbeSpan()
         } catch {
             print("EidKit configuration failed: \(error)")
