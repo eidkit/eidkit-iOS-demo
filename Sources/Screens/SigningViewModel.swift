@@ -23,7 +23,7 @@ enum SigningState {
     }
 
     struct AwaitingOutput {
-        let padesCtx: PadesContext
+        let signedTempUrl: URL
         let signResult: SignResult
         let suggestedFilename: String
     }
@@ -80,11 +80,21 @@ final class SigningViewModel: ObservableObject {
                         guard let self else { return }
                         Task { @MainActor in self.advance(event: event) }
                     }
-                state = .awaitingOutput(.init(
-                    padesCtx: savedInput.padesCtx,
-                    signResult: result,
-                    suggestedFilename: savedInput.padesCtx.suggestedFilename
-                ))
+                let signedTempUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+                    .appendingPathComponent(savedInput.padesCtx.suggestedFilename)
+                switch await pdfSigner.complete(ctx: savedInput.padesCtx,
+                                                signatureBytes: result.signature,
+                                                certificateBytes: result.certificate,
+                                                outputUrl: signedTempUrl) {
+                case .success:
+                    state = .awaitingOutput(.init(
+                        signedTempUrl: signedTempUrl,
+                        signResult: result,
+                        suggestedFilename: savedInput.padesCtx.suggestedFilename
+                    ))
+                case .failure(let e):
+                    state = .error("generic:\(e.localizedDescription)")
+                }
             } catch is CancellationError {
                 state = .input(savedInput)
             } catch let e as CeiError {
@@ -102,19 +112,9 @@ final class SigningViewModel: ObservableObject {
 
     func onOutputUrlSelected(url: URL) {
         guard case .awaitingOutput(let aw) = state else { return }
-        Task {
-            switch await pdfSigner.complete(ctx: aw.padesCtx,
-                                            signatureBytes: aw.signResult.signature,
-                                            certificateBytes: aw.signResult.certificate,
-                                            outputUrl: url) {
-            case .success:
-                state = .success(.init(outputUrl: url,
-                                       documentName: aw.padesCtx.suggestedFilename,
-                                       signResult: aw.signResult))
-            case .failure(let e):
-                state = .error("generic:\(e.localizedDescription)")
-            }
-        }
+        state = .success(.init(outputUrl: url,
+                               documentName: aw.suggestedFilename,
+                               signResult: aw.signResult))
     }
 
     func clearDocument() { state = .documentPicker }

@@ -69,7 +69,7 @@ struct SigningScreen: View {
     /// Returns the temp URL of the signed PDF in-progress, used by fileMover.
     private func tempSignedFile() -> URL {
         if case .awaitingOutput(let aw) = vm.state {
-            return aw.padesCtx.tempFileUrl
+            return aw.signedTempUrl
         }
         return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("signed.pdf")
     }
@@ -81,30 +81,30 @@ private struct DocumentPickerContent: View {
     let onPick: () -> Void
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .strokeBorder(Color.surfaceBorder, lineWidth: 1)
-            .background(Color.surfaceCard.cornerRadius(12))
-            .overlay {
-                VStack(spacing: 12) {
-                    Image(systemName: "doc.fill")
-                        .font(.system(size: 44))
-                        .foregroundStyle(Color.electricBlue)
-                    Text(String(localized: "signing_pick_pdf_title"))
-                        .font(.headline).foregroundStyle(.white)
-                        .multilineTextAlignment(.center)
-                    Text(String(localized: "signing_pick_pdf_description"))
-                        .font(.caption).foregroundStyle(Color.white.opacity(0.6))
-                        .multilineTextAlignment(.center)
-                    Button(action: onPick) {
-                        Text(String(localized: "signing_pick_pdf_button"))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color.electricBlue)
-                }
-                .padding(24)
+        VStack(spacing: 12) {
+            Image(systemName: "doc.fill")
+                .font(.system(size: 44))
+                .foregroundStyle(Color.electricBlue)
+            Text(String(localized: "signing_pick_pdf_title"))
+                .font(.headline).foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+            Text(String(localized: "signing_pick_pdf_description"))
+                .font(.caption).foregroundStyle(Color.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+            Button(action: onPick) {
+                Text(String(localized: "signing_pick_pdf_button"))
+                    .frame(maxWidth: .infinity)
             }
-            .frame(minHeight: 200)
+            .buttonStyle(.borderedProminent)
+            .tint(Color.electricBlue)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, minHeight: 200)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.surfaceBorder, lineWidth: 1)
+                .background(Color.surfaceCard.cornerRadius(12))
+        )
     }
 }
 
@@ -214,9 +214,9 @@ private struct SigningSuccessContent: View {
                       value: String(hex.prefix(48)) + "…")
 
             Spacer(minLength: 8)
-            Button {
-                UIApplication.shared.open(state.outputUrl)
-            } label: {
+            ShareLink(item: state.outputUrl,
+                      preview: SharePreview(state.documentName,
+                                            icon: Image(systemName: "doc.fill"))) {
                 Text(String(localized: "signing_success_open")).frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
