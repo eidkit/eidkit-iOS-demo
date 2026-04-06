@@ -1,14 +1,14 @@
 import SwiftUI
 import EidKit
+import OpenTelemetryApi
 
 @main
 struct EidKitApp: App 
 {
     init() {
         do {
-            try EidKit.configure(EidKitConfig(
-                tracerProvider: TelemetrySetup.makeTracerProvider()
-            ))
+            OpenTelemetry.registerTracerProvider(tracerProvider: TelemetrySetup.makeTracerProvider())
+            try EidKitSdk.configure(EidKitConfig())
             TelemetrySetup.emitProbeSpan()
         } catch {
             print("EidKit configuration failed: \(error)")

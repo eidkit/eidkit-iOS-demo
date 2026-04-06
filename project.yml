@@ -13,10 +13,11 @@ options:
 
 packages:
   EidKit:
-    # TODO: switch to remote once 0.1.3 is tagged:
-    # url: https://github.com/eidkit/eidkit-ios-releases
-    # exactVersion: "0.1.3"
-    path: /Users/adela.toma/Watt/eidkit-ios
+    url: https://github.com/eidkit/eidkit-ios-releases
+    exactVersion: "0.1.3"
+  OpenTelemetry:
+    url: https://github.com/open-telemetry/opentelemetry-swift-core.git
+    from: "2.3.0"
 
 targets:
   EidKitApp:
@@ -60,11 +61,12 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
-        OTHER_LDFLAGS: $(inherited) -framework EidKit
     dependencies:
       - package: EidKit
         product: EidKit
-        embed: true
-        codeSign: true
       - package: EidKit
         product: EidKitOtlp
+      - package: OpenTelemetry
+        product: OpenTelemetryApi
+      - package: OpenTelemetry
+        product: OpenTelemetrySdk

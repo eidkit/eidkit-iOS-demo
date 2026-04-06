@@ -75,7 +75,7 @@ final class KycViewModel: ObservableObject {
         scanTask = Task {
             do {
                     print("[KycViewModel] EidKit.reader starting...")
-                let result = try await EidKit.reader(can: s.can)
+                let result = try await EidKitSdk.reader(can: s.can)
                     .withPersonalData(pin: s.pin)
                     .withActiveAuth()
                     .withPhoto(s.includePhoto)

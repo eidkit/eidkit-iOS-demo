@@ -42,7 +42,7 @@ final class AuthViewModel: ObservableObject {
         scanTask?.cancel()
         scanTask = Task {
             do {
-                let result = try await EidKit.reader(can: s.can)
+                let result = try await EidKitSdk.reader(can: s.can)
                     .withPersonalData(pin: s.pin)
                     .withActiveAuth()
                     .read { [weak self] event in

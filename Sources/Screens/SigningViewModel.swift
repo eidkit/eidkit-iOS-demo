@@ -74,7 +74,7 @@ final class SigningViewModel: ObservableObject {
 
         Task {
             do {
-                let result = try await EidKit.signer(can: s.can)
+                let result = try await EidKitSdk.signer(can: s.can)
                     .sign(hash: s.padesCtx.signedAttrsHash, signingPin: s.pin)
                     .execute { [weak self] event in
                         guard let self else { return }
