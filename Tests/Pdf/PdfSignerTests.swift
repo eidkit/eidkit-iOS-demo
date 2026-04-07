@@ -35,27 +35,26 @@ final class PdfSignerTests: XCTestCase {
         return Data(body.utf8)
     }()
 
-    /// Self-signed P-384 cert DER (CN=PdfSignerTest), valid for 10 years. Test-only.
-    private static let testCertDer = Data(hexBytes: """
-        308202b63082023b020900d98a9f81e2eac758300a06082a8648ce3d040302301831163014060355
-        04030c0d5064665369676e657254657374301e170d3236303430373139353232385a170d33363034
-        30343139353232385a30183116301406035504030c0d5064665369676e657254657374308201cc30
-        82016406072a8648ce3d020130820157020101303c06072a8648ce3d0101023100ffffffffffffff
-        fffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffff
-        ff307b0430fffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000
-        000000000000fffffffc0430b3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088
-        f5013875ac656398d8a2ed19d2a85c8edd3ec2aef031500a335926aa319a27a1d00896a6773a482
-        7acdac73046104aa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385
-        502f25dbf55296c3a545e3872760ab73617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147c
-        e9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f023100ffffffffffffffffffffffff
-        ffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc5297302010103620004ec
-        f4c9eba6bac402e5664f693f45a04772c04c27bfa35cc942e08002abd76a01819a5bb2fa7c95ca7
-        0beb5fcebc2fadfee23a7bc18182619ae3601b0d7dadcd928071ccb4c0ba23083d5c24a530012b3
-        16a663f6b3e0761ac6f7e6f92cf5dff9300a06082a8648ce3d0403020369003066023100f290bd0
-        2289a8141472928cf67434ec6de6e8cc23230b6adbc40f9662ebc6d694ff8163ef4f6b351e7ccc2
-        04890933cb023100f726c05c140733980dcf0de164b0ec5c9ad48c381507fd8de9d1e0b36198de1
-        02e1ecef5ee81495bf3504182ae47e2fe
-        """)
+    /// Self-signed P-384 cert DER (CN=Test), valid for 10 years. Test-only.
+    private static let testCertDer = Data(hexBytes:
+        "308202a330820229020900a2da7b6be411d435300a06082a8648ce3d040302300f310d300b060355" +
+        "04030c0454657374301e170d3236303430373230303531335a170d3336303430343230303531335a" +
+        "300f310d300b06035504030c0454657374308201cc3082016406072a8648ce3d0201308201570201" +
+        "01303c06072a8648ce3d0101023100ffffffffffffffffffffffffffffffffffffffffffffffffffff" +
+        "fffffffffffeffffffff0000000000000000ffffffff307b0430ffffffffffffffffffffffffffffff" +
+        "fffffffffffffffffffffffffffffffffeffffffff0000000000000000fffffffc0430b3312f" +
+        "a7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8" +
+        "edd3ec2aef031500a335926aa319a27a1d00896a6773a4827acdac73046104aa87ca22be8b05378e" +
+        "b1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab736" +
+        "17de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a" +
+        "431d7c90ea0e5f023100ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f437" +
+        "2ddf581a0db248b0a77aecec196accc529730201010362000487327a94f1eb2deee48c7d3910ce0b" +
+        "97badac092008771179ba11d4c2fa2c407b979ac58e78c272116b41849e075bb6513ec50a94912cb" +
+        "ceeaf9f0102c271c40c69cc9090c9439052e023d1861ff86bb05a63d9b4f30c7d7d1ad3f92d5a0b1" +
+        "a9300a06082a8648ce3d040302036800306502300323ff94cce34c8fd30101097307e20371d33000" +
+        "eeebf79918fe4071b101e150f4d0c11f4c6a38d42faa0e26abd8cdc2023100f138c5bf81c378f84e" +
+        "7edce8ce8ec5d54d677a1a664442fd6a4dde4f471254d5721e76f34c45c2351259121e67b754d6"
+    )
 
     /// A fake 96-byte raw ECDSA signature (all zeros). Structurally valid, cryptographically not.
     private static let fakeRawSignature = Data(repeating: 0x01, count: 96)
@@ -213,7 +212,6 @@ final class PdfSignerTests: XCTestCase {
         let (ctx, _) = try await runPrepare()
         let outUrl = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString + ".pdf")
-        defer { try? FileManager.default.removeItem(at: outUrl) }
 
         try await PdfSigner().complete(
             ctx: ctx,
@@ -234,7 +232,6 @@ final class PdfSignerTests: XCTestCase {
         let (ctx, _) = try await runPrepare()
         let outUrl = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString + ".pdf")
-        defer { try? FileManager.default.removeItem(at: outUrl) }
 
         try await PdfSigner().complete(
             ctx: ctx,
@@ -266,7 +263,6 @@ final class PdfSignerTests: XCTestCase {
         let (ctx, _) = try await runPrepare()
         let outUrl = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString + ".pdf")
-        defer { try? FileManager.default.removeItem(at: outUrl) }
 
         try await PdfSigner().complete(
             ctx: ctx,
@@ -287,7 +283,6 @@ final class PdfSignerTests: XCTestCase {
         let (ctx, prepared) = try await runPrepare()
         let outUrl = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString + ".pdf")
-        defer { try? FileManager.default.removeItem(at: outUrl) }
 
         try await PdfSigner().complete(
             ctx: ctx,
