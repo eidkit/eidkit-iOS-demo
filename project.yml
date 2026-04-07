@@ -63,3 +63,17 @@ targets:
         product: EidKit
       - package: EidKit
         product: EidKitOtlp
+
+  EidKitAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Tests
+        createIntermediateGroups: true
+    dependencies:
+      - target: EidKitApp
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
