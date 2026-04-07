@@ -14,7 +14,7 @@ options:
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
-    exactVersion: "0.1.7"
+    exactVersion: "0.1.8"
 
 targets:
   EidKitApp:

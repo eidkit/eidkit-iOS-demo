@@ -54,7 +54,6 @@ private struct KycInputContent: View {
                 focus = .pin
             }
             .focused($focus, equals: .can)
-            .onAppear { focus = .can }
 
             PinField(label: String(localized: "label_auth_pin"),
                      maxLength: 4, value: binding(\.pin, vm.onPinChange)) { }

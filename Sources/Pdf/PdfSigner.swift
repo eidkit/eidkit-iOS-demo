@@ -41,7 +41,6 @@ final class PdfSigner {
         // Build signedAttrs with a placeholder messageDigest (all zeros, 48 bytes)
         // We'll compute the real PDF hash over the byte ranges after we know the placeholder offset.
         // Strategy: write placeholder, measure ranges, compute real hash, rebuild signedAttrs.
-        let placeholder = Data(repeating: 0x00, count: reservedSignatureBytes)
         let (modifiedPdf, byteRanges) = try insertSignaturePlaceholder(
             pdfData: pdfData,
             placeholderSize: reservedSignatureBytes
@@ -123,46 +122,128 @@ final class PdfSigner {
 
     // MARK: - PDF placeholder injection
 
+    /// Parse the original PDF's trailer to extract /Root ref, /Size, and startxref offset.
+    /// These are required to build a correct incremental update.
+    private func parseOriginalTrailer(_ data: Data) throws -> (rootRef: String, size: Int, startxref: Int) {
+        let bytes = [UInt8](data)
+        let len = bytes.count
+
+        // Search backwards for last "startxref" → this is the /Prev offset for our update
+        let sxToken = [UInt8]("startxref".utf8)
+        var sxPos = -1
+        outer: for i in stride(from: len - sxToken.count, through: 0, by: -1) {
+            for j in 0 ..< sxToken.count { if bytes[i + j] != sxToken[j] { continue outer } }
+            sxPos = i; break
+        }
+        guard sxPos >= 0 else { throw PdfError("No startxref in PDF") }
+        var p = sxPos + sxToken.count
+        while p < len && (bytes[p] == 0x20 || bytes[p] == 0x0A || bytes[p] == 0x0D) { p += 1 }
+        var numStr = ""
+        while p < len && bytes[p] >= 0x30 && bytes[p] <= 0x39 {
+            numStr.append(Character(UnicodeScalar(bytes[p]))); p += 1
+        }
+        guard let startxref = Int(numStr) else { throw PdfError("Invalid startxref value") }
+
+        // Search backwards for last "trailer" dict → contains /Root and /Size
+        let trToken = [UInt8]("trailer".utf8)
+        var trPos = -1
+        outerT: for i in stride(from: len - trToken.count, through: 0, by: -1) {
+            for j in 0 ..< trToken.count { if bytes[i + j] != trToken[j] { continue outerT } }
+            trPos = i; break
+        }
+        guard trPos >= 0 else { throw PdfError("No trailer in PDF") }
+        let dictEnd = min(trPos + 512, len)
+        let dictStr = String(bytes: Array(bytes[trPos ..< dictEnd]), encoding: .ascii) ?? ""
+
+        guard let rootIdx = dictStr.range(of: "/Root ") else { throw PdfError("No /Root in trailer") }
+        let rootParts = dictStr[rootIdx.upperBound...]
+            .components(separatedBy: CharacterSet.whitespaces)
+            .filter { !$0.isEmpty }
+            .prefix(3)
+        guard rootParts.count >= 3 else { throw PdfError("Malformed /Root in trailer") }
+        let rootRef = "\(rootParts[0]) \(rootParts[1]) \(rootParts[2])"
+
+        guard let sizeIdx = dictStr.range(of: "/Size ") else { throw PdfError("No /Size in trailer") }
+        let sizeToken = dictStr[sizeIdx.upperBound...]
+            .components(separatedBy: CharacterSet(charactersIn: " \n\r\t/>"))
+            .first(where: { !$0.isEmpty }) ?? ""
+        guard let size = Int(sizeToken) else { throw PdfError("Malformed /Size in trailer") }
+
+        return (rootRef, size, startxref)
+    }
+
     /// Insert an incremental update with a /ByteRange placeholder and zeroed signature content.
+    /// Also adds a signature field and updates the catalog's /AcroForm so PDF readers
+    /// discover the signature and show the signature panel.
     /// Returns the modified PDF data and the resolved byte ranges [start1, len1, start2, len2].
     private func insertSignaturePlaceholder(pdfData: Data, placeholderSize: Int) throws -> (Data, [Int]) {
-        // The hex-encoded placeholder occupies placeholderSize characters in the PDF stream.
-        // We write a minimal PDF signature object appended as an incremental update.
-        //
-        // Structure appended:
-        //   <xref table> <trailer> <signature dict with /Contents <000...0> and /ByteRange [...]>
-        //
-        // We use a simplified approach: construct the incremental update, measure the offsets,
-        // then fix up the ByteRange.
-
         let baseLength = pdfData.count
 
-        // Build signature dictionary with a temporary ByteRange (will be patched)
-        let tempByteRange = "[0 999999 999999 999999]"
+        let (origRootRef, origSize, origStartxref) = try parseOriginalTrailer(pdfData)
+        let rootParts    = origRootRef.components(separatedBy: " ")
+        let catalogObjNum = Int(rootParts.first ?? "1") ?? 1
+        let sigFieldObjNum = origSize          // N   — sig field widget
+        let sigDictObjNum  = origSize + 1      // N+1 — sig dict (/Type /Sig)
+
+        let tempByteRange  = "[0 999999 999999 999999]"
         let hexPlaceholder = String(repeating: "0", count: placeholderSize)
 
-        var sigDict = ""
-        sigDict += "1 0 obj\n"
-        sigDict += "<< /Type /Sig\n"
-        sigDict += "   /Filter /Adobe.PPKLite\n"
-        sigDict += "   /SubFilter /ETSI.CAdES.detached\n"
-        sigDict += "   /ByteRange \(tempByteRange)          \n"
-        sigDict += "   /Contents <\(hexPlaceholder)>\n"
-        sigDict += ">>\n"
-        sigDict += "endobj\n"
+        // 1. Updated catalog: same object number, /AcroForm added
+        let catalogStr = try updatedCatalogObj(pdfData: pdfData,
+                                               catalogObjNum: catalogObjNum,
+                                               sigFieldObjNum: sigFieldObjNum,
+                                               sigDictObjNum: sigDictObjNum)
 
-        // Build AcroForm + page annotation pointing to sig object
-        // (Minimal — no visible field, just the invisible signature object)
+        // 2. Updated page: add /Annots so the sig widget is registered on the page
+        let pageObjNum = firstPageObjNum(pdfData: pdfData, catalogObjNum: catalogObjNum)
+        let pageStr    = try updatedPageObj(pdfData: pdfData,
+                                            pageObjNum: pageObjNum,
+                                            sigFieldObjNum: sigFieldObjNum)
+
+        // 3. Sig field widget (invisible, linked to page via /P)
+        let sigFieldStr = "\(sigFieldObjNum) 0 obj\n" +
+                          "<< /FT /Sig /Type /Annot /Subtype /Widget\n" +
+                          "   /T (Sig1) /V \(sigDictObjNum) 0 R\n" +
+                          "   /Rect [0 0 0 0] /P \(pageObjNum) 0 R\n" +
+                          ">>\nendobj\n"
+
+        // 4. Sig dict with placeholder
+        let signingDate = pdfDateString()
+        let sigDictStr = "\(sigDictObjNum) 0 obj\n" +
+                         "<< /Type /Sig\n" +
+                         "   /Filter /Adobe.PPKLite\n" +
+                         "   /SubFilter /ETSI.CAdES.detached\n" +
+                         "   /M (\(signingDate))\n" +
+                         "   /Reason (Semnatura electronica cu Cartea de Identitate Electronica Romana)\n" +
+                         "   /ByteRange \(tempByteRange)          \n" +
+                         "   /Contents <\(hexPlaceholder)>\n" +
+                         ">>\nendobj\n"
+
+        // Assemble incremental update — write objects sorted by number so xref subsections
+        // can be listed in ascending order (required by some validators).
+        let objList: [(num: Int, str: String)] = [
+            (num: pageObjNum,     str: pageStr),
+            (num: catalogObjNum,  str: catalogStr),
+            (num: sigFieldObjNum, str: sigFieldStr),
+            (num: sigDictObjNum,  str: sigDictStr),
+        ].sorted { $0.num < $1.num }
+
         var update = "\n"
-        let sigObjOffset = baseLength + update.utf8.count
-        update += sigDict
-
+        var objOffsets: [Int: Int] = [:]
+        for obj in objList {
+            objOffsets[obj.num] = baseLength + update.utf8.count
+            update += obj.str
+        }
         let xrefOffset = baseLength + update.utf8.count
+
+        // XRef: one subsection per updated object (always valid, even if non-contiguous)
         update += "xref\n"
-        update += "1 1\n"
-        update += String(format: "%010d 00000 n \n", sigObjOffset)
+        for obj in objList {
+            update += "\(obj.num) 1\n"
+            update += String(format: "%010d 00000 n \n", objOffsets[obj.num]!)
+        }
         update += "trailer\n"
-        update += "<< /Size 2 /Root 1 0 R /Prev \(baseLength) >>\n"
+        update += "<< /Size \(sigDictObjNum + 1) /Root \(origRootRef) /Prev \(origStartxref) >>\n"
         update += "startxref\n"
         update += "\(xrefOffset)\n"
         update += "%%EOF\n"
@@ -170,21 +251,18 @@ final class PdfSigner {
         var combined = pdfData
         combined.append(Data(update.utf8))
 
-        // Locate the /Contents < ... > span to determine byte ranges
+        // Locate /Contents < ... > span to compute byte ranges.
+        // contentsStart points to the first hex char (AFTER '<').
+        // contentsEnd   points to the first byte AFTER '>'.
+        // Per PDF spec the ByteRange must exclude both '<' and '>' delimiters,
+        // so Range1 length = contentsStart-1 (stops before '<').
         guard let contentsStart = findContentsValueStart(in: combined),
               let contentsEnd   = findContentsValueEnd(in: combined, after: contentsStart)
         else { throw PdfError("Could not locate /Contents placeholder offset") }
 
-        // ByteRange: [before-contents, contents-start - 0, after-contents, rest]
-        let range1Start  = 0
-        let range1Length = contentsStart          // up to opening '<'
-        let range2Start  = contentsEnd            // after closing '>'
-        let range2Length = combined.count - contentsEnd
-
-        let byteRange = [range1Start, range1Length, range2Start, range2Length]
+        let byteRange    = [0, contentsStart - 1, contentsEnd, combined.count - contentsEnd]
         let byteRangeStr = "[\(byteRange[0]) \(byteRange[1]) \(byteRange[2]) \(byteRange[3])]"
 
-        // Patch ByteRange in the PDF — find the temp value and replace it (same length via padding)
         let tempBytes = Data(tempByteRange.utf8)
         guard let rangeInPdf = combined.range(of: tempBytes) else {
             throw PdfError("Could not locate ByteRange placeholder")
@@ -194,6 +272,141 @@ final class PdfSigner {
         combined.replaceSubrange(rangeInPdf, with: Data(padded.utf8))
 
         return (combined, byteRange)
+    }
+
+    /// Find the object number of the first page by walking Catalog → Pages → Kids[0].
+    /// This is safe against binary content streams that may accidentally contain "/Type /Page".
+    private func firstPageObjNum(pdfData: Data, catalogObjNum: Int) -> Int {
+        // Catalog contains /Pages N 0 R
+        guard let pagesNum = extractRefValue(key: "/Pages", objNum: catalogObjNum, pdfData: pdfData) else { return 1 }
+        // Pages node contains /Kids [X 0 R ...]
+        guard let firstKid = extractRefValue(key: "/Kids [", objNum: pagesNum, pdfData: pdfData, stopAt: " ") else { return 1 }
+        return firstKid
+    }
+
+    /// Find `objNum 0 obj` in pdfData, then extract the first integer reference after `key`.
+    /// E.g. key="/Pages " → finds "/Pages 2 0 R" → returns 2.
+    private func extractRefValue(key: String, objNum: Int, pdfData: Data, stopAt: String = " ") -> Int? {
+        let bytes   = [UInt8](pdfData)
+        let marker  = [UInt8]("\(objNum) 0 obj".utf8)
+        var pos     = -1
+        outer: for i in 0 ..< bytes.count - marker.count {
+            for j in 0 ..< marker.count { if bytes[i + j] != marker[j] { continue outer } }
+            pos = i; break
+        }
+        guard pos >= 0 else { return nil }
+        // Search for key within the next 1024 bytes (the object dict header)
+        let end = min(pos + 1024, bytes.count)
+        let slice = bytes[pos ..< end]
+        let sliceStr = String(bytes: Array(slice), encoding: .ascii) ?? ""
+        guard let keyRange = sliceStr.range(of: key) else { return nil }
+        let after = String(sliceStr[keyRange.upperBound...])
+        let token = after.components(separatedBy: CharacterSet(charactersIn: " \n\r\t/[>")).first(where: { !$0.isEmpty }) ?? ""
+        return Int(token)
+    }
+
+    /// Return an updated version of the given page object that adds /Annots referencing the sig field.
+    private func updatedPageObj(pdfData: Data, pageObjNum: Int, sigFieldObjNum: Int) throws -> String {
+        let bytes = [UInt8](pdfData)
+        let marker = [UInt8]("\(pageObjNum) 0 obj".utf8)
+        var pos = -1
+        outerP: for i in 0 ..< bytes.count - marker.count {
+            for j in 0 ..< marker.count { if bytes[i + j] != marker[j] { continue outerP } }
+            pos = i; break
+        }
+        guard pos >= 0 else { throw PdfError("Page object \(pageObjNum) not found") }
+        var i = pos + marker.count
+        while i < bytes.count && (bytes[i] == 0x20 || bytes[i] == 0x0A || bytes[i] == 0x0D) { i += 1 }
+        guard i + 1 < bytes.count, bytes[i] == 0x3C, bytes[i + 1] == 0x3C else {
+            throw PdfError("Expected << after page object header")
+        }
+        var depth = 0
+        let dictStart = i
+        var dictEnd = -1
+        while i < bytes.count {
+            if bytes[i] == 0x3C, i + 1 < bytes.count, bytes[i + 1] == 0x3C {
+                depth += 1; i += 2
+            } else if bytes[i] == 0x3E, i + 1 < bytes.count, bytes[i + 1] == 0x3E {
+                depth -= 1; i += 2
+                if depth == 0 { dictEnd = i; break }
+            } else if bytes[i] == 0x28 {
+                i += 1
+                while i < bytes.count && bytes[i] != 0x29 {
+                    if bytes[i] == 0x5C { i += 1 }
+                    i += 1
+                }
+                i += 1
+            } else { i += 1 }
+        }
+        guard dictEnd >= 0 else { throw PdfError("Could not find end of page dict") }
+        guard var dictStr = String(bytes: Array(bytes[dictStart..<dictEnd]), encoding: .isoLatin1) else {
+            throw PdfError("Could not decode page dict")
+        }
+        if !dictStr.contains("/Annots") {
+            if let last = dictStr.range(of: ">>", options: .backwards) {
+                dictStr.replaceSubrange(last, with: "\n   /Annots [\(sigFieldObjNum) 0 R]\n>>")
+            }
+        }
+        return "\(pageObjNum) 0 obj\n\(dictStr)\nendobj\n"
+    }
+
+    /// Read the original catalog object from the PDF and return an updated version
+    /// that includes an /AcroForm pointing to the sig field.
+    private func updatedCatalogObj(pdfData: Data, catalogObjNum: Int,
+                                   sigFieldObjNum: Int, sigDictObjNum: Int) throws -> String {
+        let bytes = [UInt8](pdfData)
+        let marker = [UInt8]("\(catalogObjNum) 0 obj".utf8)
+
+        // Find the catalog object in the file
+        var pos = -1
+        outer: for i in 0 ..< bytes.count - marker.count {
+            for j in 0 ..< marker.count { if bytes[i + j] != marker[j] { continue outer } }
+            pos = i; break
+        }
+        guard pos >= 0 else { throw PdfError("Catalog object \(catalogObjNum) not found") }
+
+        // Skip to start of dict
+        var i = pos + marker.count
+        while i < bytes.count && (bytes[i] == 0x20 || bytes[i] == 0x0A || bytes[i] == 0x0D) { i += 1 }
+        guard i + 1 < bytes.count, bytes[i] == 0x3C, bytes[i + 1] == 0x3C else {
+            throw PdfError("Expected << after catalog object header")
+        }
+
+        // Depth-count << / >> to find the matching closing >>
+        var depth = 0
+        let dictStart = i
+        var dictEnd   = -1
+        while i < bytes.count {
+            if bytes[i] == 0x3C, i + 1 < bytes.count, bytes[i + 1] == 0x3C {
+                depth += 1; i += 2
+            } else if bytes[i] == 0x3E, i + 1 < bytes.count, bytes[i + 1] == 0x3E {
+                depth -= 1; i += 2
+                if depth == 0 { dictEnd = i; break }
+            } else if bytes[i] == 0x28 {   // literal string ( ... )
+                i += 1
+                while i < bytes.count && bytes[i] != 0x29 {
+                    if bytes[i] == 0x5C { i += 1 }   // skip escape
+                    i += 1
+                }
+                i += 1
+            } else { i += 1 }
+        }
+        guard dictEnd >= 0 else { throw PdfError("Could not find end of catalog dict") }
+
+        guard var dictStr = String(bytes: Array(bytes[dictStart ..< dictEnd]), encoding: .isoLatin1) else {
+            throw PdfError("Could not decode catalog dict")
+        }
+
+        // Insert /AcroForm before the outermost closing >>
+        if !dictStr.contains("/AcroForm") {
+            // Replace the last ">>" with our AcroForm entry + >>
+            if let last = dictStr.range(of: ">>", options: .backwards) {
+                dictStr.replaceSubrange(last,
+                    with: "\n   /AcroForm << /Fields [\(sigFieldObjNum) 0 R] /SigFlags 3 >>\n>>")
+            }
+        }
+
+        return "\(catalogObjNum) 0 obj\n\(dictStr)\nendobj\n"
     }
 
     private func findContentsValueStart(in data: Data) -> Int? {
@@ -219,15 +432,17 @@ final class PdfSigner {
 
     private func buildSignedAttrsDer(pdfHash: Data) -> Data {
         // SET {
-        //   SEQUENCE { OID id-contentType, SET { OID id-data } }
+        //   SEQUENCE { OID id-contentType,   SET { OID id-data } }
         //   SEQUENCE { OID id-messageDigest, SET { OCTET STRING pdfHash } }
         // }
+        let oidContentType: [UInt8] = [0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x03]
+        let oidMsgDigest:   [UInt8] = [0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x04]
         let contentTypeAttr = asn1Seq([
-            asn1OID(oidData),
+            asn1OID(oidContentType),
             asn1Set([asn1OID(oidData)]),
         ])
         let msgDigestAttr = asn1Seq([
-            asn1OID([0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x04]),
+            asn1OID(oidMsgDigest),
             asn1Set([asn1OctetString(pdfHash)]),
         ])
         return asn1Set([contentTypeAttr, msgDigestAttr])
@@ -241,15 +456,17 @@ final class PdfSigner {
 
         let issuerAndSerial = asn1Seq([issuerDer, serialDer])
 
-        // Re-tag signedAttrs as [0] IMPLICIT
-        let signedAttrsImplicit = asn1Tagged(0, signedAttrsDer, implicit: false)
+        // signedAttrs [0] IMPLICIT SET — RFC 5652 §5.3: retag 0x31 → 0xA0 (do not wrap).
+        // Verifier strips the context tag, restores 0x31, and hashes that — must match signedAttrsDer.
+        var signedAttrsTagged = signedAttrsDer
+        signedAttrsTagged[signedAttrsTagged.startIndex] = 0xA0
 
         // SignerInfo
         let signerInfo = asn1Seq([
             asn1Integer(1),                                      // version
             issuerAndSerial,                                     // sid
             asn1Seq([asn1OID(oidSha384)]),                      // digestAlgorithm
-            signedAttrsImplicit,                                 // [0] signedAttrs
+            signedAttrsTagged,                                   // [0] IMPLICIT signedAttrs
             asn1Seq([asn1OID(oidEcdsaSha384)]),                 // signatureAlgorithm
             asn1OctetString(derSig),                            // signature
         ])
@@ -257,8 +474,9 @@ final class PdfSigner {
         // encapContentInfo (detached — no content)
         let encapContentInfo = asn1Seq([asn1OID(oidData)])
 
-        // certificates [0] IMPLICIT
-        let certsTagged = asn1Tagged(0, certDer, implicit: false)
+        // certificates [0] IMPLICIT SET OF Certificate — wrap cert in SET, retag 0x31 → 0xA0
+        var certsTagged = asn1Set([certDer])
+        certsTagged[certsTagged.startIndex] = 0xA0
 
         // SignedData
         let signedData = asn1Seq([
@@ -357,6 +575,16 @@ final class PdfSigner {
     private func asn1Tagged(_ tag: UInt8, _ value: Data, implicit: Bool) -> Data {
         let t: UInt8 = implicit ? (0xA0 | tag) : (0xA0 | tag)
         return Data([t]) + berLength(value.count) + value
+    }
+
+    private func pdfDateString() -> String {
+        // PDF date format: D:YYYYMMDDHHmmSSOHH'mm'
+        let now = Date()
+        let cal = Calendar(identifier: .gregorian)
+        var comps = cal.dateComponents(in: TimeZone(identifier: "UTC")!, from: now)
+        return String(format: "D:%04d%02d%02d%02d%02d%02dZ",
+                      comps.year ?? 2000, comps.month ?? 1, comps.day ?? 1,
+                      comps.hour ?? 0, comps.minute ?? 0, comps.second ?? 0)
     }
 
     private func berLength(_ len: Int) -> Data {
