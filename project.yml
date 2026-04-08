@@ -43,6 +43,7 @@ targets:
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         NFCReaderUsageDescription: "NFC is required to scan your identity card."
+        ITSAppUsesNonExemptEncryption: false
         UILaunchStoryboardName: LaunchScreen
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         com.apple.developer.nfc.readersession.iso7816.select-identifiers:
@@ -58,6 +59,9 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
+        NFC,eID,identity card,Romania,chip reader,KYC,document signing,authentication        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CFBundleIconName: AppIcon
     dependencies:
       - package: EidKit
         product: EidKit
