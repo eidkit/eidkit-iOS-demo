@@ -14,7 +14,7 @@ options:
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
-    exactVersion: "0.1.9"
+    exactVersion: "0.1.10"
 
 targets:
   EidKitApp:
@@ -41,7 +41,7 @@ targets:
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "2"
+        CFBundleVersion: "3"
         NFCReaderUsageDescription: "NFC is required to scan your identity card."
         UILaunchStoryboardName: LaunchScreen
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -57,7 +57,7 @@ targets:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
     dependencies:
       - package: EidKit
         product: EidKit
