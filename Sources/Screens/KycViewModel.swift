@@ -22,11 +22,20 @@ enum KycState {
         var includePhoto: Bool = false
         var includeSignature: Bool = false
         var canSubmit: Bool { can.count == 6 && pin.count == 4 }
+
+        #if DEBUG
+        /// Pre-filled for faster local testing. Never compiled into release builds.
+        static let debugDefault = Input(
+            can: debugInfoPlistString("DEBUG_NFC_CAN"),
+            pin: debugInfoPlistString("DEBUG_NFC_PIN")
+        )
+        #endif
     }
 
     struct Scanning {
         var completedSteps: [ReadEvent] = []
         var activeStep: ReadEvent? = nil
+        var cardConnected: Bool = false
         var includePhoto: Bool
         var includeSignature: Bool
     }
@@ -42,7 +51,11 @@ enum KycState {
 @MainActor
 final class KycViewModel: ObservableObject {
 
+    #if DEBUG
+    @Published var state: KycState = .input(.debugDefault)
+    #else
     @Published var state: KycState = .input(.init())
+    #endif
     private let pdfGenerator = KycPdfGenerator()
     private var scanTask: Task<Void, Never>? = nil
     var cancelScan: (() -> Void)?
@@ -79,7 +92,11 @@ final class KycViewModel: ObservableObject {
                     .withActiveAuth()
                     .withPhoto(savedInput.includePhoto)
                     .withSignatureImage(savedInput.includeSignature)
-                    .read(alertMessage: alertMessage) { [weak self] event in
+                    .read(
+                        alertMessage: alertMessage,
+                        cardConnectedMessage: String(localized: "nfc_card_connected_warning", locale: appLocale),
+                        stepMessage: { $0.nfcSheetMessage }
+                    ) { [weak self] event in
                         guard let self else { return }
                         Task { @MainActor in self.advance(event: event) }
                     }
@@ -124,6 +141,7 @@ final class KycViewModel: ObservableObject {
         guard case .scanning(var s) = state else { return }
         if let prev = s.activeStep { s.completedSteps.append(prev) }
         s.activeStep = event
+        if event == .connectingToCard { s.cardConnected = true }
         state = .scanning(s)
     }
 }

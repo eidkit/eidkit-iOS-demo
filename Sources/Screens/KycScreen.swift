@@ -102,6 +102,9 @@ private struct KycScanningContent: View {
 
     var body: some View {
         VStack(spacing: 10) {
+            if state.cardConnected {
+                CardConnectedWarning()
+            }
             ForEach(Array(allSteps.enumerated()), id: \.offset) { _, step in
                 WizardStep(label: step.label, state: stepState(for: step))
             }

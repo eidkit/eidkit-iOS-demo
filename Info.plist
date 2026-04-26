@@ -15,9 +15,15 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.1</string>
+	<string>1.2</string>
 	<key>CFBundleVersion</key>
-	<string>3</string>
+	<string>4</string>
+	<key>DEBUG_NFC_CAN</key>
+	<string>$(DEBUG_NFC_CAN)</string>
+	<key>DEBUG_NFC_PIN</key>
+	<string>$(DEBUG_NFC_PIN)</string>
+	<key>DEBUG_NFC_SIGNING_PIN</key>
+	<string>$(DEBUG_NFC_SIGNING_PIN)</string>
 	<key>NFCReaderUsageDescription</key>
 	<string>NFC is required to scan your identity card.</string>
 	<key>UILaunchStoryboardName</key>

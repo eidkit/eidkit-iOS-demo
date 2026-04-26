@@ -28,6 +28,7 @@
 "nfc_alert_sign" = "Hold your Romanian ID card to the back of your iPhone to sign";
 "nfc_prompt_title" = "Hold card to phone";
 "nfc_prompt_body" = "Place the back of your Romanian ID against the NFC antenna";
+"nfc_card_connected_warning" = "Card detected — keep it still!";
 
 /* KYC screen */
 "kyc_title" = "KYC Read";
@@ -64,6 +65,17 @@
 "step_reading_identity" = "Reading identity";
 "step_verifying_active_auth" = "Verifying chip";
 "step_signing_document" = "Signing document";
+
+/* NFC sheet step messages (shown in system sheet, must be short) */
+"nfc_step_connecting" = "Keep it still — connecting…";
+"nfc_step_establishing_pace" = "Keep it still — securing channel…";
+"nfc_step_reading_photo" = "Reading photo…";
+"nfc_step_reading_signature_image" = "Reading signature…";
+"nfc_step_verifying_passive_auth" = "Verifying document…";
+"nfc_step_verifying_pin" = "Verifying PIN…";
+"nfc_step_reading_identity" = "Reading identity…";
+"nfc_step_verifying_active_auth" = "Verifying chip…";
+"nfc_step_signing_document" = "Signing document…";
 
 /* Result labels */
 "result_passive_auth_valid" = "Document authentic";

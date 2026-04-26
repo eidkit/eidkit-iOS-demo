@@ -11,18 +11,31 @@ enum AuthState {
         var can: String = ""
         var pin: String = ""
         var canSubmit: Bool { can.count == 6 && pin.count == 4 }
+
+        #if DEBUG
+        /// Pre-filled for faster local testing. Never compiled into release builds.
+        static let debugDefault = Input(
+            can: debugInfoPlistString("DEBUG_NFC_CAN"),
+            pin: debugInfoPlistString("DEBUG_NFC_PIN")
+        )
+        #endif
     }
 
     struct Scanning {
         var completedSteps: [ReadEvent] = []
         var activeStep: ReadEvent? = nil
+        var cardConnected: Bool = false
     }
 }
 
 @MainActor
 final class AuthViewModel: ObservableObject {
 
+    #if DEBUG
+    @Published var state: AuthState = .input(.debugDefault)
+    #else
     @Published var state: AuthState = .input(.init())
+    #endif
     private var scanTask: Task<Void, Never>? = nil
     var cancelScan: (() -> Void)?
 
@@ -46,7 +59,11 @@ final class AuthViewModel: ObservableObject {
                 let result = try await EidKitSdk.reader(can: savedInput.can)
                     .withPersonalData(pin: savedInput.pin)
                     .withActiveAuth()
-                    .read(alertMessage: alertMessage) { [weak self] event in
+                    .read(
+                        alertMessage: alertMessage,
+                        cardConnectedMessage: String(localized: "nfc_card_connected_warning", locale: appLocale),
+                        stepMessage: { $0.nfcSheetMessage }
+                    ) { [weak self] event in
                         guard let self else { return }
                         Task { @MainActor in self.advance(event: event) }
                     }
@@ -71,6 +88,7 @@ final class AuthViewModel: ObservableObject {
         guard case .scanning(var s) = state else { return }
         if let prev = s.activeStep { s.completedSteps.append(prev) }
         s.activeStep = event
+        if event == .connectingToCard { s.cardConnected = true }
         state = .scanning(s)
     }
 }

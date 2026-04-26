@@ -23,7 +23,7 @@ enum TelemetrySetup {
         let resource = Resource(attributes: [
             "service.name":           .string("eidkit-ios-demo"),
             "sdk.name":               .string("eidkit-ios"),
-            "sdk.version":            .string("0.1.10"),
+            "sdk.version":            .string("0.1.11"),
             "device.model":           .string(deviceModel),
             "device.os_version":      .string(osVersion),
             "nfc.tech":               .string("IsoDep"),

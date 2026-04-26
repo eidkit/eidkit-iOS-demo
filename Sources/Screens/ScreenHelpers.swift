@@ -9,6 +9,17 @@ var appLocale: Locale {
     return Locale(identifier: lang == "en" ? "en" : "ro")
 }
 
+#if DEBUG
+// MARK: - Debug credentials (local.yml only, never in release builds)
+
+/// Reads a string from Info.plist — populated from local.yml which is gitignored.
+/// Returns an empty string if the key is absent (e.g. on CI or a teammate's machine
+/// who hasn't set up local.yml debug entries).
+func debugInfoPlistString(_ key: String) -> String {
+    Bundle.main.infoDictionary?[key] as? String ?? ""
+}
+#endif
+
 // MARK: - Date formatting
 
 func formatDob(_ raw: String) -> String {
@@ -75,20 +86,18 @@ extension ReadEvent {
         case .verifyingActiveAuth:   return String(localized: "step_verifying_active_auth")
         }
     }
-}
 
-extension ReadEvent: Equatable {
-    public static func == (lhs: ReadEvent, rhs: ReadEvent) -> Bool {
-        switch (lhs, rhs) {
-        case (.connectingToCard,      .connectingToCard):      return true
-        case (.establishingPace,      .establishingPace):      return true
-        case (.readingPhoto,          .readingPhoto):          return true
-        case (.readingSignatureImage, .readingSignatureImage): return true
-        case (.verifyingPassiveAuth,  .verifyingPassiveAuth):  return true
-        case (.verifyingPin,          .verifyingPin):          return true
-        case (.readingIdentity,       .readingIdentity):       return true
-        case (.verifyingActiveAuth,   .verifyingActiveAuth):   return true
-        default: return false
+    /// Localized string for the NFC system sheet. Passed to the SDK's `stepMessage:` closure.
+    var nfcSheetMessage: String {
+        switch self {
+        case .connectingToCard:      return String(localized: "nfc_step_connecting",              locale: appLocale)
+        case .establishingPace:      return String(localized: "nfc_step_establishing_pace",       locale: appLocale)
+        case .readingPhoto:          return String(localized: "nfc_step_reading_photo",           locale: appLocale)
+        case .readingSignatureImage: return String(localized: "nfc_step_reading_signature_image", locale: appLocale)
+        case .verifyingPassiveAuth:  return String(localized: "nfc_step_verifying_passive_auth",  locale: appLocale)
+        case .verifyingPin:          return String(localized: "nfc_step_verifying_pin",           locale: appLocale)
+        case .readingIdentity:       return String(localized: "nfc_step_reading_identity",        locale: appLocale)
+        case .verifyingActiveAuth:   return String(localized: "nfc_step_verifying_active_auth",   locale: appLocale)
         }
     }
 }
@@ -102,16 +111,39 @@ extension SignEvent {
         case .signingDocument:  return String(localized: "step_signing_document")
         }
     }
+
+    /// Localized string for the NFC system sheet. Passed to the SDK's `stepMessage:` closure.
+    var nfcSheetMessage: String {
+        switch self {
+        case .connectingToCard: return String(localized: "nfc_step_connecting",       locale: appLocale)
+        case .establishingPace: return String(localized: "nfc_step_establishing_pace", locale: appLocale)
+        case .verifyingPin:     return String(localized: "nfc_step_verifying_pin",     locale: appLocale)
+        case .signingDocument:  return String(localized: "nfc_step_signing_document",  locale: appLocale)
+        }
+    }
 }
 
-extension SignEvent: Equatable {
-    public static func == (lhs: SignEvent, rhs: SignEvent) -> Bool {
-        switch (lhs, rhs) {
-        case (.connectingToCard, .connectingToCard): return true
-        case (.establishingPace, .establishingPace): return true
-        case (.verifyingPin,     .verifyingPin):     return true
-        case (.signingDocument,  .signingDocument):  return true
-        default: return false
+// MARK: - Card connected warning banner
+
+/// Persistent banner shown in the scanning wizard once the NFC tag is detected.
+/// Reinforces the system sheet message for users who glance at the (dimmed) app UI.
+struct CardConnectedWarning: View {
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(Color.yellow)
+            Text(String(localized: "nfc_card_connected_warning"))
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Color.yellow)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.yellow.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(Color.yellow.opacity(0.35), lineWidth: 1)
+        )
     }
 }

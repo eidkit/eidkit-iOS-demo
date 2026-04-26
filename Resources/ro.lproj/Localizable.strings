@@ -28,6 +28,7 @@
 "nfc_alert_sign" = "Ține cartea de identitate la spatele iPhone-ului pentru a semna";
 "nfc_prompt_title" = "Apropie cardul de telefon";
 "nfc_prompt_body" = "Ține cartea de identitate la spatele telefonului, lângă antena NFC";
+"nfc_card_connected_warning" = "Card detectat — nu-l mișca!";
 
 /* KYC screen */
 "kyc_title" = "Citire KYC";
@@ -64,6 +65,17 @@
 "step_reading_identity" = "Citire identitate";
 "step_verifying_active_auth" = "Verificare cip";
 "step_signing_document" = "Semnare document";
+
+/* NFC sheet step messages (shown in system sheet, must be short) */
+"nfc_step_connecting" = "Nu-l mișca — conectare…";
+"nfc_step_establishing_pace" = "Nu-l mișca — canal securizat…";
+"nfc_step_reading_photo" = "Citire fotografie…";
+"nfc_step_reading_signature_image" = "Citire semnătură…";
+"nfc_step_verifying_passive_auth" = "Verificare document…";
+"nfc_step_verifying_pin" = "Verificare PIN…";
+"nfc_step_reading_identity" = "Citire identitate…";
+"nfc_step_verifying_active_auth" = "Verificare cip…";
+"nfc_step_signing_document" = "Semnare document…";
 
 /* Result labels */
 "result_passive_auth_valid" = "Document autentic";

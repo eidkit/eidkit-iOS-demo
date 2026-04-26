@@ -5,3 +5,15 @@ targets:
     settings:
       base:
         DEVELOPMENT_TEAM: YOUR_TEAM_ID
+
+# Optional: override the remote SDK with a local checkout for development.
+# This lets you edit the SDK and test from Xcode without going through a release.
+#
+# Use SPM's edit mode instead of a path: override — it avoids a static/dynamic
+# naming conflict that occurs when the package product and target share a name.
+#
+# Run once from the app directory:
+#   swift package edit eidkit-ios-releases --path ../eidkit-ios
+#
+# To revert back to the released version:
+#   swift package unedit eidkit-ios-releases

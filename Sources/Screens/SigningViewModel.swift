@@ -20,6 +20,7 @@ enum SigningState {
     struct Scanning {
         var completedSteps: [SignEvent] = []
         var activeStep: SignEvent? = nil
+        var cardConnected: Bool = false
     }
 
     struct AwaitingOutput {
@@ -50,7 +51,16 @@ final class SigningViewModel: ObservableObject {
             defer { if accessed { url.stopAccessingSecurityScopedResource() } }
             switch await pdfSigner.prepare(url: url, displayName: displayName, signedPrefix: prefix) {
             case .success(let ctx):
+                #if DEBUG
+                state = .input(.init(
+                    documentName: displayName,
+                    padesCtx: ctx,
+                    can: debugInfoPlistString("DEBUG_NFC_CAN"),
+                    pin: debugInfoPlistString("DEBUG_NFC_SIGNING_PIN")
+                ))
+                #else
                 state = .input(.init(documentName: displayName, padesCtx: ctx))
+                #endif
             case .failure(let e):
                 state = .error("generic:\(e.localizedDescription)")
             }
@@ -76,7 +86,11 @@ final class SigningViewModel: ObservableObject {
             do {
                 let result = try await EidKitSdk.signer(can: savedInput.can)
                     .sign(hash: savedInput.padesCtx.signedAttrsHash, signingPin: savedInput.pin)
-                    .execute(alertMessage: alertMessage) { [weak self] event in
+                    .execute(
+                        alertMessage: alertMessage,
+                        cardConnectedMessage: String(localized: "nfc_card_connected_warning", locale: appLocale),
+                        stepMessage: { $0.nfcSheetMessage }
+                    ) { [weak self] event in
                         guard let self else { return }
                         Task { @MainActor in self.advance(event: event) }
                     }
@@ -124,6 +138,7 @@ final class SigningViewModel: ObservableObject {
         guard case .scanning(var s) = state else { return }
         if let prev = s.activeStep { s.completedSteps.append(prev) }
         s.activeStep = event
+        if event == .connectingToCard { s.cardConnected = true }
         state = .scanning(s)
     }
 }
