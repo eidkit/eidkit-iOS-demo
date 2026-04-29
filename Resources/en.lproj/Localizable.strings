@@ -103,10 +103,14 @@
 "key_usage_non_repudiation" = "Non-repudiation (signing)";
 "result_signature_label" = "Signature (raw r||s, hex)";
 
+/* City hall SSO screen */
+"cityhall_posting" = "Sending…";
+
 /* Actions */
 "action_scan_card" = "Scan Card";
 "action_try_again" = "Try Again";
 "action_back" = "Back";
+"action_cancel" = "Cancel";
 "action_copy" = "Copy";
 "action_export_pdf" = "Export to PDF";
 

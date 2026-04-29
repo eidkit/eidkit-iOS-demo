@@ -1,0 +1,140 @@
+import SwiftUI
+import EidKit
+
+struct CityHallAuthScreen: View {
+
+    let input: CityHallInput
+    let onDismiss: () -> Void
+
+    @StateObject private var vm: CityHallAuthViewModel
+
+    init(input: CityHallInput, onDismiss: @escaping () -> Void) {
+        self.input = input
+        self.onDismiss = onDismiss
+        _vm = StateObject(wrappedValue: CityHallAuthViewModel(input: input))
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.surfaceDark.ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: 16) {
+                        content
+                        Spacer(minLength: 24)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                }
+            }
+            .navigationTitle(input.serviceName.isEmpty ? "SSO Login" : input.serviceName)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(String(localized: "action_cancel")) {
+                        vm.cancelScan?()
+                        onDismiss()
+                    }
+                }
+            }
+            .hideKeyboardOnTap()
+        }
+        .onAppear {
+            vm.onSuccess = { onDismiss() }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch vm.state {
+        case .input(let s):    CityHallInputContent(state: s, vm: vm)
+        case .scanning(let s): CityHallScanningContent(state: s)
+        case .posting:         CityHallPostingContent()
+        case .error(let msg):  ErrorContent(message: msg, onRetry: { vm.cancelScan?(); onDismiss() })
+        }
+    }
+}
+
+// MARK: - Input
+
+private struct CityHallInputContent: View {
+    let state: CityHallAuthState.Input
+    let vm: CityHallAuthViewModel
+    @FocusState private var focus: Field?
+    enum Field { case can, pin }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text(String(localized: "auth_pin_hint"))
+                .font(.caption)
+                .foregroundStyle(Color.white.opacity(0.6))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            PinField(label: String(localized: "label_can"),
+                     maxLength: 6,
+                     value: Binding(get: { state.can }, set: vm.onCanChange),
+                     helpImageName: "can_location") {
+                focus = .pin
+            }
+            .focused($focus, equals: .can)
+            .onAppear { focus = .can }
+
+            PinField(label: String(localized: "label_auth_pin"),
+                     maxLength: 4,
+                     value: Binding(get: { state.pin }, set: vm.onPinChange)) { }
+            .focused($focus, equals: .pin)
+
+            if state.canSubmit {
+                Button {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    vm.startScan(alertMessage: String(localized: "nfc_alert_read", locale: appLocale))
+                } label: {
+                    Text(String(localized: "action_scan_card")).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.electricBlue)
+            }
+        }
+    }
+}
+
+// MARK: - Scanning
+
+private struct CityHallScanningContent: View {
+    let state: CityHallAuthState.Scanning
+
+    private let allSteps: [ReadEvent] = [
+        .connectingToCard, .establishingPace,
+        .verifyingPassiveAuth, .verifyingPin,
+        .readingIdentity, .verifyingActiveAuth,
+    ]
+
+    var body: some View {
+        VStack(spacing: 10) {
+            ForEach(Array(allSteps.enumerated()), id: \.offset) { _, step in
+                WizardStep(label: step.label, state: stepState(for: step))
+            }
+        }
+    }
+
+    private func stepState(for step: ReadEvent) -> StepState {
+        if state.completedSteps.contains(where: { $0 == step }) { return .done }
+        if state.activeStep == step { return .active }
+        return .pending
+    }
+}
+
+// MARK: - Posting
+
+private struct CityHallPostingContent: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .tint(.white)
+            Text(String(localized: "cityhall_posting"))
+                .foregroundStyle(Color.white.opacity(0.7))
+                .font(.caption)
+        }
+        .padding(.top, 40)
+    }
+}

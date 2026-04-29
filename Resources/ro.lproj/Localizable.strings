@@ -103,10 +103,14 @@
 "key_usage_non_repudiation" = "Nerepudiere (semnare)";
 "result_signature_label" = "Semnătură (r||s brut, hex)";
 
+/* City hall SSO screen */
+"cityhall_posting" = "Se trimite…";
+
 /* Actions */
 "action_scan_card" = "Scanează cardul";
 "action_try_again" = "Încearcă din nou";
 "action_back" = "Înapoi";
+"action_cancel" = "Anulează";
 "action_copy" = "Copiază";
 "action_export_pdf" = "Exportă PDF";
 /* Demo mode */

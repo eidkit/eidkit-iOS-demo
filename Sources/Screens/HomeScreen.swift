@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeScreen: View {
     let isDemoMode: Bool
+    @Binding var cityHallInput: CityHallInput?
 
     var body: some View {
         TabView {
@@ -15,5 +16,8 @@ struct HomeScreen: View {
                 .tabItem { Label("tab_auth", systemImage: "shield.lefthalf.filled") }
         }
         .tint(Color.electricBlue)
+        .fullScreenCover(item: $cityHallInput) { input in
+            CityHallAuthScreen(input: input, onDismiss: { cityHallInput = nil })
+        }
     }
 }

@@ -3,7 +3,7 @@ import EidKit
 import OpenTelemetryApi
 
 @main
-struct EidKitApp: App 
+struct EidKitApp: App
 {
     private let isDemoMode: Bool
 
@@ -41,9 +41,11 @@ struct EidKitApp: App
         UITabBar.appearance().unselectedItemTintColor = UIColor.white.withAlphaComponent(0.45)
     }
 
+    @State private var cityHallInput: CityHallInput? = nil
+
     var body: some Scene {
         WindowGroup {
-            HomeScreen(isDemoMode: isDemoMode)
+            HomeScreen(isDemoMode: isDemoMode, cityHallInput: $cityHallInput)
                 .environment(\.locale, appLocale)
                 .preferredColorScheme(.dark)
                 .onAppear {
@@ -52,6 +54,22 @@ struct EidKitApp: App
                         .compactMap { $0 as? UIWindowScene }
                         .flatMap { $0.windows }
                         .forEach { $0.backgroundColor = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1) }
+                }
+                .onOpenURL { url in
+                    guard url.scheme == "eidkit",
+                          url.host == "auth",
+                          let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                          let session = components.queryItems?.first(where: { $0.name == "session" })?.value,
+                          let callback = components.queryItems?.first(where: { $0.name == "callback" })?.value
+                    else { return }
+                    let service = components.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
+                    let nonce   = components.queryItems?.first(where: { $0.name == "nonce" })?.value ?? ""
+                    cityHallInput = CityHallInput(
+                        sessionToken: session,
+                        callbackUrl: callback,
+                        serviceName: service,
+                        nonce: nonce
+                    )
                 }
         }
     }
