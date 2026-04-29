@@ -15,9 +15,20 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.2</string>
+	<string>1.3</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>ro.eidkit.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>eidkit</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
-	<string>4</string>
+	<string>6</string>
 	<key>DEBUG_NFC_CAN</key>
 	<string>$(DEBUG_NFC_CAN)</string>
 	<key>DEBUG_NFC_PIN</key>

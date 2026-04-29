@@ -41,7 +41,7 @@ targets:
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: APPL
         CFBundleShortVersionString: "1.3"
-        CFBundleVersion: "5"
+        CFBundleVersion: "6"
         CFBundleURLTypes:
           - CFBundleURLSchemes: [eidkit]
             CFBundleURLName: ro.eidkit.app
@@ -60,7 +60,7 @@ targets:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.3"
-        CURRENT_PROJECT_VERSION: "5"
+        CURRENT_PROJECT_VERSION: "6"
     dependencies:
       - package: EidKit
         product: EidKit

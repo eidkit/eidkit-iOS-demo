@@ -13,6 +13,7 @@ enum CityHallAuthState {
     case input(Input)
     case scanning(Scanning)
     case posting
+    case success(String)
     case error(String)
 
     struct Input {
@@ -69,7 +70,7 @@ final class CityHallAuthViewModel: ObservableObject {
             do {
                 let nonceData: Data? = savedInput.nonce.isEmpty ? nil : hexToData(savedInput.nonce)
 
-                let reader = EidKitSdk.reader(can: savedInput.can)
+                let reader = try EidKitSdk.reader(can: savedInput.can)
                     .withPersonalData(pin: savedInput.pin)
 
                 if let nd = nonceData {
@@ -89,7 +90,10 @@ final class CityHallAuthViewModel: ObservableObject {
 
                 state = .posting
                 try await postSessionComplete(result: result, savedInput: savedInput)
-                onSuccess?()
+                let firstName = result.identity?.firstName ?? ""
+                let lastName  = result.identity?.lastName ?? ""
+                let name = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
+                state = .success(name)
 
             } catch is CancellationError {
                 state = .input(savedInput)
@@ -109,7 +113,12 @@ final class CityHallAuthViewModel: ObservableObject {
     }
 
     func retry() {
-        guard case .input = state else { return }
+        state = .input(.init(
+            sessionToken: input.sessionToken,
+            callbackUrl: input.callbackUrl,
+            serviceName: input.serviceName,
+            nonce: input.nonce
+        ))
     }
 
     private func advance(event: ReadEvent) {

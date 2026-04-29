@@ -31,9 +31,13 @@ struct CityHallAuthScreen: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "action_cancel")) {
-                        vm.cancelScan?()
-                        onDismiss()
+                    if case .success = vm.state {
+                        EmptyView()
+                    } else {
+                        Button(String(localized: "action_cancel")) {
+                            vm.cancelScan?()
+                            onDismiss()
+                        }
                     }
                 }
             }
@@ -50,7 +54,8 @@ struct CityHallAuthScreen: View {
         case .input(let s):    CityHallInputContent(state: s, vm: vm)
         case .scanning(let s): CityHallScanningContent(state: s)
         case .posting:         CityHallPostingContent()
-        case .error(let msg):  ErrorContent(message: msg, onRetry: { vm.cancelScan?(); onDismiss() })
+        case .success(let name): CityHallSuccessContent(name: name, onDone: onDismiss)
+        case .error(let msg):  ErrorContent(message: msg, onRetry: { vm.retry() })
         }
     }
 }
@@ -121,6 +126,36 @@ private struct CityHallScanningContent: View {
         if state.completedSteps.contains(where: { $0 == step }) { return .done }
         if state.activeStep == step { return .active }
         return .pending
+    }
+}
+
+// MARK: - Success
+
+private struct CityHallSuccessContent: View {
+    let name: String
+    let onDone: () -> Void
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(Color.electricBlue)
+                .padding(.top, 40)
+
+            Text(String(format: String(localized: "cityhall_success_message"), name))
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.white)
+
+            Button {
+                onDone()
+            } label: {
+                Text(String(localized: "cityhall_success_done")).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.electricBlue)
+        }
+        .padding(.horizontal, 8)
     }
 }
 

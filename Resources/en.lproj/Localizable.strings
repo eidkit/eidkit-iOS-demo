@@ -105,6 +105,8 @@
 
 /* City hall SSO screen */
 "cityhall_posting" = "Sending…";
+"cityhall_success_message" = "Welcome, %@!\n\nReturn to your browser — the page will update automatically.";
+"cityhall_success_done" = "Done";
 
 /* Actions */
 "action_scan_card" = "Scan Card";

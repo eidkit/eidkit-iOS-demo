@@ -105,6 +105,8 @@
 
 /* City hall SSO screen */
 "cityhall_posting" = "Se trimite…";
+"cityhall_success_message" = "Bun venit, %@!\n\nReveniți la browser — pagina se va actualiza automat.";
+"cityhall_success_done" = "Gata";
 
 /* Actions */
 "action_scan_card" = "Scanează cardul";

@@ -9,11 +9,11 @@ targets:
 # Optional: override the remote SDK with a local checkout for development.
 # This lets you edit the SDK and test from Xcode without going through a release.
 #
-# Use SPM's edit mode instead of a path: override — it avoids a static/dynamic
-# naming conflict that occurs when the package product and target share a name.
+# Add the following to your local.yml, then run `xcodegen generate`:
 #
-# Run once from the app directory:
-#   swift package edit eidkit-ios-releases --path ../eidkit-ios
+# packages:
+#   EidKit:
+#     path: ../eidkit-ios
 #
-# To revert back to the released version:
-#   swift package unedit eidkit-ios-releases
+# To revert back to the released version, remove the packages override from
+# local.yml and run `xcodegen generate` again.
