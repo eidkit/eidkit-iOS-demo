@@ -11,6 +11,24 @@ options:
   generateEmptyDirectories: true
   createIntermediateGroups: true
 
+schemes:
+  EidKitApp:
+    build:
+      targets:
+        EidKitApp: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - EidKitAppTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
