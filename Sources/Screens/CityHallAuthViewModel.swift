@@ -72,6 +72,7 @@ final class CityHallAuthViewModel: ObservableObject {
 
                 let reader = try EidKitSdk.reader(can: savedInput.can)
                     .withPersonalData(pin: savedInput.pin)
+                    .withChipAuth()
 
                 if let nd = nonceData {
                     reader.withActiveAuth(nonce: nd)
@@ -161,6 +162,12 @@ final class CityHallAuthViewModel: ObservableObject {
         let aaCertificate  = aaProof?.certificate.base64EncodedString() ?? ""
         let cardSerial     = claim?.cardSerialNumber ?? ""
 
+        let caProof               = claim?.chipAuthProof
+        let caTerminalPublicKey   = caProof?.terminalPublicKey.base64EncodedString() ?? ""
+        let caEphemeralPrivateKey = caProof?.ephemeralPrivateKey.base64EncodedString() ?? ""
+        let caSharedSecretX       = caProof?.sharedSecretX.base64EncodedString() ?? ""
+        let rawDg14Base64         = caProof?.rawDg14.base64EncodedString() ?? ""
+
         let body: [String: Any] = [
             "sessionToken":              savedInput.sessionToken,
             "cnp":                       cnp,
@@ -183,6 +190,10 @@ final class CityHallAuthViewModel: ObservableObject {
             "cardSerialNumber":          cardSerial,
             "passedOnDevicePassiveAuth": passedPassive,
             "passedOnDeviceActiveAuth":  passedActive,
+            "caTerminalPublicKey":       caTerminalPublicKey,
+            "caEphemeralPrivateKey":     caEphemeralPrivateKey,
+            "caSharedSecretX":          caSharedSecretX,
+            "rawDg14":                   rawDg14Base64,
         ]
 
         guard let url = URL(string: savedInput.callbackUrl) else {
