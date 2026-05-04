@@ -32,7 +32,7 @@ schemes:
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
-    exactVersion: "0.1.12"
+    exactVersion: "0.1.13"
 
 targets:
   EidKitApp:
@@ -58,8 +58,8 @@ targets:
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "1.3"
-        CFBundleVersion: "6"
+        CFBundleShortVersionString: "1.4"
+        CFBundleVersion: "7"
         CFBundleURLTypes:
           - CFBundleURLSchemes: [eidkit]
             CFBundleURLName: ro.eidkit.app
@@ -77,8 +77,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: ro.eidkit.app
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
-        MARKETING_VERSION: "1.3"
-        CURRENT_PROJECT_VERSION: "6"
+        MARKETING_VERSION: "1.4"
+        CURRENT_PROJECT_VERSION: "7"
     dependencies:
       - package: EidKit
         product: EidKit
