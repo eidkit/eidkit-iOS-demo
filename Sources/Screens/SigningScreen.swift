@@ -218,6 +218,7 @@ private struct SigningInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
+        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 }
 

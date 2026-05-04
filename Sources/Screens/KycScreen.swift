@@ -123,6 +123,7 @@ private struct KycInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
+        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 
     private func binding(_ kp: WritableKeyPath<KycState.Input, String>, _ setter: @escaping (String) -> Void) -> Binding<String> {

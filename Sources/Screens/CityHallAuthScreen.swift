@@ -142,6 +142,7 @@ private struct CityHallInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
+        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 }
 
