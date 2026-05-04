@@ -5,19 +5,14 @@ import OpenTelemetryApi
 @main
 struct EidKitApp: App
 {
-    private let isDemoMode: Bool
-
     init() {
-        var demoMode = true
         do {
             OpenTelemetry.registerTracerProvider(tracerProvider: TelemetrySetup.provider)
             try EidKitSdk.configure(EidKitConfig(licenseToken: "eidkit-demo-app", onSpan: TelemetrySetup.adapter.onSpan))
-            demoMode = false
             TelemetrySetup.emitProbeSpan()
         } catch {
             print("EidKit configuration failed: \(error)")
         }
-        isDemoMode = demoMode
 
         let surfaceDark = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1)
 
@@ -45,7 +40,7 @@ struct EidKitApp: App
 
     var body: some Scene {
         WindowGroup {
-            HomeScreen(isDemoMode: isDemoMode, cityHallInput: $cityHallInput)
+            HomeScreen(cityHallInput: $cityHallInput)
                 .environment(\.locale, appLocale)
                 .preferredColorScheme(.dark)
                 .onAppear {

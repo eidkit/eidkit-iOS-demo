@@ -46,6 +46,26 @@ struct CityHallAuthScreen: View {
         .onAppear {
             vm.onSuccess = { onDismiss() }
         }
+        .sheet(isPresented: Binding(
+            get: { vm.saveDialog != nil && !BiometricStore.neverAsk() },
+            set: { if !$0 { vm.dismissSaveDialog() } }
+        )) {
+            if var dialog = vm.saveDialog {
+                SaveCredentialsSheet(
+                    state: Binding(
+                        get: { vm.saveDialog ?? dialog },
+                        set: { dialog = $0; vm.onSaveDialogToggle(saveCan: $0.saveCan, savePin: $0.savePin) }
+                    ),
+                    onConfirm: vm.confirmSave,
+                    onDismiss: vm.dismissSaveDialog,
+                    onNeverAsk: vm.neverAskSave
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .background(Color.surfaceDark)
+            }
+        }
+        .task { await vm.tryBiometricLoad() }
     }
 
     @ViewBuilder
@@ -66,6 +86,7 @@ private struct CityHallInputContent: View {
     let state: CityHallAuthState.Input
     let vm: CityHallAuthViewModel
     @FocusState private var focus: Field?
+    @State private var hasCredentials = BiometricStore.hasCredentials()
     enum Field { case can, pin }
 
     var body: some View {
@@ -78,7 +99,9 @@ private struct CityHallInputContent: View {
             PinField(label: String(localized: "label_can"),
                      maxLength: 6,
                      value: Binding(get: { state.can }, set: vm.onCanChange),
-                     helpImageName: "can_location") {
+                     helpImageName: "can_location",
+                     maskable: true,
+                     onClear: { vm.onCanChange("") }) {
                 focus = .pin
             }
             .focused($focus, equals: .can)
@@ -86,8 +109,27 @@ private struct CityHallInputContent: View {
 
             PinField(label: String(localized: "label_auth_pin"),
                      maxLength: 4,
-                     value: Binding(get: { state.pin }, set: vm.onPinChange)) { }
+                     value: Binding(get: { state.pin }, set: vm.onPinChange),
+                     maskable: true,
+                     onClear: { vm.onPinChange("") }) { }
             .focused($focus, equals: .pin)
+
+            if hasCredentials {
+                HStack {
+                    Spacer()
+                    Button {
+                        BiometricStore.clear()
+                        hasCredentials = false
+                        vm.onCanChange("")
+                        vm.onPinChange("")
+                    } label: {
+                        Text(String(localized: "bio_forget"))
+                            .font(.caption)
+                            .foregroundStyle(Color.errorRed)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
             if state.canSubmit {
                 Button {

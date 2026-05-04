@@ -108,6 +108,19 @@
 "cityhall_success_message" = "Bun venit, %@!\n\nReveniți la browser — pagina se va actualiza automat.";
 "cityhall_success_done" = "Gata";
 
+/* Biometric save dialog */
+"bio_prompt_title" = "Acces rapid cu biometrie";
+"bio_save_title" = "Acces rapid cu biometrie";
+"bio_save_message" = "Alege ce vrei să salvezi:";
+"bio_save_can" = "CAN (6 cifre)";
+"bio_save_pin_auth" = "PIN autentificare (4 cifre)";
+"bio_save_pin_sign" = "PIN semnare (6 cifre)";
+"bio_save_yes" = "Salvează";
+"bio_save_no" = "Nu, mulțumesc";
+"bio_save_never" = "Nu mai întreba";
+"bio_forget" = "Uită codurile salvate";
+"action_clear" = "Șterge";
+
 /* Actions */
 "action_scan_card" = "Scanează cardul";
 "action_try_again" = "Încearcă din nou";

@@ -148,6 +148,19 @@
 "pdf_ok" = "OK";
 "pdf_fail" = "FAIL";
 
+/* Biometric save dialog */
+"bio_prompt_title" = "Quick biometric access";
+"bio_save_title" = "Quick biometric access";
+"bio_save_message" = "Choose what to save:";
+"bio_save_can" = "CAN (6 digits)";
+"bio_save_pin_auth" = "Authentication PIN (4 digits)";
+"bio_save_pin_sign" = "Signing PIN (6 digits)";
+"bio_save_yes" = "Save";
+"bio_save_no" = "No thanks";
+"bio_save_never" = "Don't ask again";
+"bio_forget" = "Forget saved credentials";
+"action_clear" = "Clear";
+
 /* Errors */
 "error_wrong_pin" = "Wrong PIN — %d attempt(s) remaining";
 "error_pin_blocked" = "PIN blocked — visit a MAI service point to unblock";

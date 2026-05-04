@@ -36,6 +36,32 @@ struct SigningScreen: View {
                 vm.onOutputUrlSelected(url: url)
             }
         }
+        .sheet(isPresented: Binding(
+            get: {
+                if case .success(let s) = vm.state { return s.saveDialog != nil && !BiometricStore.neverAsk() }
+                return false
+            },
+            set: { if !$0 { vm.dismissSaveDialog() } }
+        )) {
+            if case .success(let s) = vm.state, var dialog = s.saveDialog {
+                SaveCredentialsSheet(
+                    state: Binding(
+                        get: {
+                            if case .success(let latest) = vm.state { return latest.saveDialog ?? dialog }
+                            return dialog
+                        },
+                        set: { dialog = $0; vm.onSaveDialogToggle(saveCan: $0.saveCan, savePin2: $0.savePin2) }
+                    ),
+                    onConfirm: vm.confirmSave,
+                    onDismiss: vm.dismissSaveDialog,
+                    onNeverAsk: vm.neverAskSave
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .background(Color.surfaceDark)
+            }
+        }
+        .task { await vm.tryBiometricLoad() }
     }
 
     @ViewBuilder
@@ -115,6 +141,7 @@ private struct SigningInputContent: View {
     let vm: SigningViewModel
     let onChangePdf: () -> Void
     @FocusState private var focus: Field?
+    @State private var hasCredentials = BiometricStore.hasCredentials()
     enum Field { case can, pin }
 
     var body: some View {
@@ -148,7 +175,9 @@ private struct SigningInputContent: View {
             PinField(label: String(localized: "label_can"),
                      maxLength: 6,
                      value: Binding(get: { state.can }, set: vm.onCanChange),
-                     helpImageName: "can_location") {
+                     helpImageName: "can_location",
+                     maskable: true,
+                     onClear: { vm.onCanChange("") }) {
                 focus = .pin
             }
             .focused($focus, equals: .can)
@@ -156,8 +185,27 @@ private struct SigningInputContent: View {
 
             PinField(label: String(localized: "label_signing_pin"),
                      maxLength: 6,
-                     value: Binding(get: { state.pin }, set: vm.onPinChange)) { }
+                     value: Binding(get: { state.pin }, set: vm.onPinChange),
+                     maskable: true,
+                     onClear: { vm.onPinChange("") }) { }
             .focused($focus, equals: .pin)
+
+            if hasCredentials {
+                HStack {
+                    Spacer()
+                    Button {
+                        BiometricStore.clear()
+                        hasCredentials = false
+                        vm.onCanChange("")
+                        vm.onPinChange("")
+                    } label: {
+                        Text(String(localized: "bio_forget"))
+                            .font(.caption)
+                            .foregroundStyle(Color.errorRed)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
             if state.canSubmit {
                 Button {

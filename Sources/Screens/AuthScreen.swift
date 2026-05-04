@@ -19,6 +19,32 @@ struct AuthScreen: View {
         .navigationTitle("auth_title")
         .navigationBarTitleDisplayMode(.inline)
         .hideKeyboardOnTap()
+        .sheet(isPresented: Binding(
+            get: {
+                if case .success(let s) = vm.state { return s.saveDialog != nil && !BiometricStore.neverAsk() }
+                return false
+            },
+            set: { if !$0 { vm.dismissSaveDialog() } }
+        )) {
+            if case .success(let s) = vm.state, var dialog = s.saveDialog {
+                SaveCredentialsSheet(
+                    state: Binding(
+                        get: {
+                            if case .success(let latest) = vm.state { return latest.saveDialog ?? dialog }
+                            return dialog
+                        },
+                        set: { dialog = $0; vm.onSaveDialogToggle(saveCan: $0.saveCan, savePin: $0.savePin) }
+                    ),
+                    onConfirm: vm.confirmSave,
+                    onDismiss: vm.dismissSaveDialog,
+                    onNeverAsk: vm.neverAskSave
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .background(Color.surfaceDark)
+            }
+        }
+        .task { await vm.tryBiometricLoad() }
     }
 
     @ViewBuilder
@@ -26,7 +52,7 @@ struct AuthScreen: View {
         switch vm.state {
         case .input(let s):   AuthInputContent(state: s, vm: vm)
         case .scanning(let s): AuthScanningContent(state: s)
-        case .success(let r): AuthSuccessContent(result: r, onRetry: { vm.retry(); dismiss() })
+        case .success(let r): AuthSuccessContent(result: r.result, onRetry: { vm.retry(); dismiss() })
         case .error(let msg): ErrorContent(message: msg, onRetry: vm.retry)
         }
     }
@@ -50,7 +76,9 @@ private struct AuthInputContent: View {
             PinField(label: String(localized: "label_can"),
                      maxLength: 6,
                      value: Binding(get: { state.can }, set: vm.onCanChange),
-                     helpImageName: "can_location") {
+                     helpImageName: "can_location",
+                     maskable: true,
+                     onClear: { vm.onCanChange("") }) {
                 focus = .pin
             }
             .focused($focus, equals: .can)
@@ -58,7 +86,9 @@ private struct AuthInputContent: View {
 
             PinField(label: String(localized: "label_auth_pin"),
                      maxLength: 4,
-                     value: Binding(get: { state.pin }, set: vm.onPinChange)) { }
+                     value: Binding(get: { state.pin }, set: vm.onPinChange),
+                     maskable: true,
+                     onClear: { vm.onPinChange("") }) { }
             .focused($focus, equals: .pin)
 
             if state.canSubmit {

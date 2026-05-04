@@ -6,13 +6,21 @@ struct PinField: View {
     let maxLength: Int
     @Binding var value: String
     var helpImageName: String? = nil
+    var maskable: Bool = false
+    var onClear: (() -> Void)? = nil
     var onComplete: (() -> Void)? = nil
 
     @FocusState private var focused: Bool
     @State private var showHelp = false
 
+    @State private var userVisible = false
+    // Digits at index < maskedUpTo are always masked; digits >= maskedUpTo visible until timer fires.
+    @State private var maskedUpTo: Int = 0
+    @State private var prevLength: Int = 0
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // Label row
             HStack(spacing: 4) {
                 Text(label)
                     .font(.caption)
@@ -25,31 +33,61 @@ struct PinField: View {
                     }
                     .buttonStyle(.plain)
                 }
+                Spacer()
+                if maskable {
+                    Button {
+                        userVisible.toggle()
+                    } label: {
+                        Image(systemName: userVisible ? "eye.slash" : "eye")
+                            .font(.caption)
+                            .foregroundStyle(Color.white.opacity(0.6))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
 
+            // Digit boxes row
             HStack(spacing: 10) {
-                ForEach(0..<maxLength, id: \.self) { index in
-                    let digit: String = index < value.count
-                        ? String(value[value.index(value.startIndex, offsetBy: index)])
-                        : ""
-                    let isActive = focused && index == min(value.count, maxLength - 1)
+                HStack(spacing: 10) {
+                    ForEach(0..<maxLength, id: \.self) { index in
+                        let isFilled = index < value.count
+                        let digit: String = isFilled
+                            ? String(value[value.index(value.startIndex, offsetBy: index)])
+                            : ""
+                        let isActive = focused && index == min(value.count, maxLength - 1)
+                        let showDot = maskable && !userVisible && isFilled && index < maskedUpTo
 
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.surfaceCard)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .strokeBorder(
-                                        isActive ? Color.electricBlueLight : Color.surfaceBorder,
-                                        lineWidth: isActive ? 2 : 1
-                                    )
-                            )
-                        Text(digit.isEmpty ? "" : digit)
-                            .font(.title3.bold())
-                            .foregroundStyle(.white)
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.surfaceCard)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .strokeBorder(
+                                            isActive ? Color.electricBlueLight : Color.surfaceBorder,
+                                            lineWidth: isActive ? 2 : 1
+                                        )
+                                )
+                            Text(isFilled ? (showDot ? "•" : digit) : "")
+                                .font(.title3.bold())
+                                .foregroundStyle(.white)
+                        }
+                        .frame(height: 48)
+                        .frame(maxWidth: .infinity)
                     }
-                    .frame(height: 48)
-                    .frame(maxWidth: .infinity)
+                }
+                // "Șterge" clear link beside digit boxes
+                if maskable, let clear = onClear, !value.isEmpty {
+                    Button {
+                        maskedUpTo = 0
+                        prevLength = 0
+                        clear()
+                    } label: {
+                        Text(String(localized: "action_clear"))
+                            .font(.caption)
+                            .underline()
+                            .foregroundStyle(Color.white.opacity(0.6))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             // Invisible text field captures input
@@ -68,6 +106,26 @@ struct PinField: View {
                     }
             )
             .onTapGesture { focused = true }
+        }
+        .onChange(of: value) { new in
+            guard maskable && !userVisible else {
+                maskedUpTo = new.count
+                prevLength = new.count
+                return
+            }
+            let cur = new.count
+            let singleKeystroke = cur == prevLength + 1
+            prevLength = cur
+            if singleKeystroke {
+                // Show the new digit for 1s, then mask it
+                Task {
+                    try? await Task.sleep(for: .seconds(1))
+                    maskedUpTo = value.count
+                }
+            } else {
+                // Biometric pre-fill or paste: mask immediately
+                maskedUpTo = cur
+            }
         }
         .sheet(isPresented: $showHelp) {
             if let imageName = helpImageName {

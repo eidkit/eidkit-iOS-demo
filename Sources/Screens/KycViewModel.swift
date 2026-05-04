@@ -24,7 +24,6 @@ enum KycState {
         var canSubmit: Bool { can.count == 6 && pin.count == 4 }
 
         #if DEBUG
-        /// Pre-filled for faster local testing. Never compiled into release builds.
         static let debugDefault = Input(
             can: debugInfoPlistString("DEBUG_NFC_CAN"),
             pin: debugInfoPlistString("DEBUG_NFC_PIN")
@@ -43,6 +42,7 @@ enum KycState {
     struct Success {
         let result: ReadResult
         var exportState: ExportState = .idle
+        var saveDialog: SaveDialogState? = nil
     }
 }
 
@@ -59,6 +59,23 @@ final class KycViewModel: ObservableObject {
     private let pdfGenerator = KycPdfGenerator()
     private var scanTask: Task<Void, Never>? = nil
     var cancelScan: (() -> Void)?
+
+    // What was in the store when this screen opened
+    private var snapshot: (can: String?, pin: String?, pin2: String?) = (nil, nil, nil)
+
+    // MARK: - Biometric load
+
+    func tryBiometricLoad() async {
+        guard BiometricStore.hasCredentials() else { return }
+        guard let result = try? await BiometricStore.load() else { return }
+        snapshot = result
+        guard case .input(var s) = state else { return }
+        s.can = result.can ?? s.can
+        s.pin = result.pin ?? s.pin
+        state = .input(s)
+    }
+
+    // MARK: - Input
 
     func onCanChange(_ v: String) {
         guard case .input(var s) = state else { return }
@@ -80,6 +97,8 @@ final class KycViewModel: ObservableObject {
         s.includeSignature = v; state = .input(s)
     }
 
+    // MARK: - NFC
+
     func startScan(alertMessage: String) {
         guard case .input(let s) = state, s.canSubmit else { return }
         let savedInput = s
@@ -100,7 +119,8 @@ final class KycViewModel: ObservableObject {
                         guard let self else { return }
                         Task { @MainActor in self.advance(event: event) }
                     }
-                state = .success(.init(result: result))
+                let dialog = buildSaveDialog(scannedCan: savedInput.can, scannedPin: savedInput.pin)
+                state = .success(.init(result: result, saveDialog: dialog))
             } catch is CancellationError {
                 state = .input(savedInput)
             } catch let e as CeiError {
@@ -112,6 +132,46 @@ final class KycViewModel: ObservableObject {
         }
         cancelScan = { [weak self] in self?.scanTask?.cancel() }
     }
+
+    // MARK: - Save dialog
+
+    func onSaveDialogToggle(saveCan: Bool? = nil, savePin: Bool? = nil) {
+        guard case .success(var s) = state, s.saveDialog != nil else { return }
+        if let v = saveCan { s.saveDialog?.saveCan = v }
+        if let v = savePin { s.saveDialog?.savePin = v }
+        state = .success(s)
+    }
+
+    func dismissSaveDialog() {
+        guard case .success(var s) = state else { return }
+        s.saveDialog = nil; state = .success(s)
+    }
+
+    func neverAskSave() {
+        BiometricStore.setNeverAsk()
+        dismissSaveDialog()
+    }
+
+    func confirmSave() {
+        guard case .success(let s) = state, let d = s.saveDialog else { return }
+        Task {
+            try? await BiometricStore.save(
+                can:  .write(d.saveCan  ? d.scannedCan  : nil),
+                pin:  .write(d.savePin  ? d.scannedPin  : nil),
+                pin2: .skip
+            )
+            snapshot = (
+                can:  d.saveCan  ? d.scannedCan  : nil,
+                pin:  d.savePin  ? d.scannedPin  : nil,
+                pin2: snapshot.pin2
+            )
+            guard case .success(var latest) = state else { return }
+            latest.saveDialog = nil
+            state = .success(latest)
+        }
+    }
+
+    // MARK: - Export
 
     func exportToPdf() {
         guard case .success(var s) = state else { return }
@@ -132,6 +192,7 @@ final class KycViewModel: ObservableObject {
     }
 
     func retry() {
+        snapshot = (nil, nil, nil)
         state = .input(.init())
     }
 
@@ -143,5 +204,20 @@ final class KycViewModel: ObservableObject {
         s.activeStep = event
         if event == .connectingToCard { s.cardConnected = true }
         state = .scanning(s)
+    }
+
+    private func buildSaveDialog(scannedCan: String, scannedPin: String) -> SaveDialogState? {
+        let canChanged = scannedCan != (snapshot.can ?? "")
+        let pinChanged = scannedPin != (snapshot.pin ?? "")
+        guard canChanged || pinChanged else { return nil }
+        return SaveDialogState(
+            scannedCan:  scannedCan,
+            scannedPin:  scannedPin,
+            scannedPin2: "",
+            saveCan:     snapshot.can != nil || canChanged,
+            savePin:     snapshot.pin != nil || pinChanged,
+            savePin2:    false,
+            showPin2Row: false
+        )
     }
 }

@@ -25,6 +25,26 @@ struct KycScreen: View {
         .navigationTitle("kyc_title")
         .navigationBarTitleDisplayMode(.inline)
         .hideKeyboardOnTap()
+        .sheet(isPresented: Binding(
+            get: { vm.state.saveDialog != nil && !BiometricStore.neverAsk() },
+            set: { if !$0 { vm.dismissSaveDialog() } }
+        )) {
+            if var dialog = vm.state.saveDialog {
+                SaveCredentialsSheet(
+                    state: Binding(
+                        get: { vm.state.saveDialog ?? dialog },
+                        set: { dialog = $0; vm.onSaveDialogToggle(saveCan: $0.saveCan, savePin: $0.savePin) }
+                    ),
+                    onConfirm: vm.confirmSave,
+                    onDismiss: vm.dismissSaveDialog,
+                    onNeverAsk: vm.neverAskSave
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .background(Color.surfaceDark)
+            }
+        }
+        .task { await vm.tryBiometricLoad() }
     }
 
     @ViewBuilder
@@ -44,19 +64,24 @@ private struct KycInputContent: View {
     let state: KycState.Input
     let vm: KycViewModel
     @FocusState private var focus: Field?
+    @State private var hasCredentials = BiometricStore.hasCredentials()
     enum Field { case can, pin }
 
     var body: some View {
         VStack(spacing: 16) {
             PinField(label: String(localized: "label_can"),
                      maxLength: 6, value: binding(\.can, vm.onCanChange),
-                     helpImageName: "can_location") {
+                     helpImageName: "can_location",
+                     maskable: true,
+                     onClear: { vm.onCanChange("") }) {
                 focus = .pin
             }
             .focused($focus, equals: .can)
 
             PinField(label: String(localized: "label_auth_pin"),
-                     maxLength: 4, value: binding(\.pin, vm.onPinChange)) { }
+                     maxLength: 4, value: binding(\.pin, vm.onPinChange),
+                     maskable: true,
+                     onClear: { vm.onPinChange("") }) { }
             .focused($focus, equals: .pin)
 
             VStack(spacing: 8) {
@@ -69,6 +94,23 @@ private struct KycInputContent: View {
                     get: { state.includeSignature }, set: vm.onSignatureToggle))
                 .toggleStyle(CheckboxToggleStyle())
                 .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if hasCredentials {
+                HStack {
+                    Spacer()
+                    Button {
+                        BiometricStore.clear()
+                        hasCredentials = false
+                        vm.onCanChange("")
+                        vm.onPinChange("")
+                    } label: {
+                        Text(String(localized: "bio_forget"))
+                            .font(.caption)
+                            .foregroundStyle(Color.errorRed)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
 
             if state.canSubmit {
@@ -248,6 +290,13 @@ private struct ExportBar: View {
 }
 
 // MARK: - Helpers
+
+private extension KycState {
+    var saveDialog: SaveDialogState? {
+        if case .success(let s) = self { return s.saveDialog }
+        return nil
+    }
+}
 
 private struct CheckboxToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {

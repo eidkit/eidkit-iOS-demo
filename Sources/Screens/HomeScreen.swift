@@ -1,18 +1,17 @@
 import SwiftUI
 
 struct HomeScreen: View {
-    let isDemoMode: Bool
     @Binding var cityHallInput: CityHallInput?
 
     var body: some View {
         TabView {
-            NavigationStack { KycScreen().safeAreaInset(edge: .top, spacing: 0) { if isDemoMode { DemoModeBanner() } } }
+            NavigationStack { KycScreen() }
                 .tabItem { Label("tab_kyc", systemImage: "person.text.rectangle") }
 
-            NavigationStack { SigningScreen().safeAreaInset(edge: .top, spacing: 0) { if isDemoMode { DemoModeBanner() } } }
+            NavigationStack { SigningScreen() }
                 .tabItem { Label("tab_signing", systemImage: "signature") }
 
-            NavigationStack { AuthScreen().safeAreaInset(edge: .top, spacing: 0) { if isDemoMode { DemoModeBanner() } } }
+            NavigationStack { AuthScreen() }
                 .tabItem { Label("tab_auth", systemImage: "shield.lefthalf.filled") }
         }
         .tint(Color.electricBlue)
