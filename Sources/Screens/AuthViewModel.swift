@@ -11,13 +11,6 @@ enum AuthState {
         var can: String = ""
         var pin: String = ""
         var canSubmit: Bool { can.count == 6 && pin.count == 4 }
-
-        #if DEBUG
-        static let debugDefault = Input(
-            can: debugInfoPlistString("DEBUG_NFC_CAN"),
-            pin: debugInfoPlistString("DEBUG_NFC_PIN")
-        )
-        #endif
     }
 
     struct Scanning {
@@ -35,11 +28,7 @@ enum AuthState {
 @MainActor
 final class AuthViewModel: ObservableObject {
 
-    #if DEBUG
-    @Published var state: AuthState = .input(.debugDefault)
-    #else
     @Published var state: AuthState = .input(.init())
-    #endif
     private var scanTask: Task<Void, Never>? = nil
     var cancelScan: (() -> Void)?
 

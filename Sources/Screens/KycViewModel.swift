@@ -22,13 +22,6 @@ enum KycState {
         var includePhoto: Bool = false
         var includeSignature: Bool = false
         var canSubmit: Bool { can.count == 6 && pin.count == 4 }
-
-        #if DEBUG
-        static let debugDefault = Input(
-            can: debugInfoPlistString("DEBUG_NFC_CAN"),
-            pin: debugInfoPlistString("DEBUG_NFC_PIN")
-        )
-        #endif
     }
 
     struct Scanning {
@@ -51,11 +44,7 @@ enum KycState {
 @MainActor
 final class KycViewModel: ObservableObject {
 
-    #if DEBUG
-    @Published var state: KycState = .input(.debugDefault)
-    #else
     @Published var state: KycState = .input(.init())
-    #endif
     private let pdfGenerator = KycPdfGenerator()
     private var scanTask: Task<Void, Never>? = nil
     var cancelScan: (() -> Void)?

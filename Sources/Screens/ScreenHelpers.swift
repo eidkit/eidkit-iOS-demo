@@ -9,17 +9,6 @@ var appLocale: Locale {
     return Locale(identifier: lang == "en" ? "en" : "ro")
 }
 
-#if DEBUG
-// MARK: - Debug credentials (local.yml only, never in release builds)
-
-/// Reads a string from Info.plist — populated from local.yml which is gitignored.
-/// Returns an empty string if the key is absent (e.g. on CI or a teammate's machine
-/// who hasn't set up local.yml debug entries).
-func debugInfoPlistString(_ key: String) -> String {
-    Bundle.main.infoDictionary?[key] as? String ?? ""
-}
-#endif
-
 // MARK: - Date formatting
 
 func formatDob(_ raw: String) -> String {
