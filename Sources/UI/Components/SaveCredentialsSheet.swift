@@ -17,6 +17,12 @@ struct SaveCredentialsSheet: View {
     let onNeverAsk: () -> Void
 
     var body: some View {
+        content
+            .background(Color.surfaceDark) // fallback for < 16.4
+            .modifier(DarkSheetBackground())
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(String(localized: "bio_save_title"))
                 .font(.headline)
@@ -80,5 +86,15 @@ private struct ToggleRow: View {
                 .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct DarkSheetBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.4, *) {
+            content.presentationBackground(Color.surfaceDark)
+        } else {
+            content
+        }
     }
 }

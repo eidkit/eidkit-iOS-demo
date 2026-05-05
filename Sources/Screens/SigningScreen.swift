@@ -56,7 +56,7 @@ struct SigningScreen: View {
                     onDismiss: vm.dismissSaveDialog,
                     onNeverAsk: vm.neverAskSave
                 )
-                .presentationDetents([.medium])
+                .presentationDetents([.height(320)])
                 .presentationDragIndicator(.visible)
                 .background(Color.surfaceDark)
             }
@@ -218,6 +218,7 @@ private struct SigningInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
+        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 }
 

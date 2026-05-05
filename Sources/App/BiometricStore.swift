@@ -55,7 +55,7 @@ final class BiometricStore {
     static func load() async throws -> (can: String?, pin: String?, pin2: String?) {
         let context = LAContext()
         let reason  = String(localized: "bio_prompt_title")
-        guard try await context.evaluatePolicy(.biometryAny, localizedReason: reason) else {
+        guard try await context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) else {
             throw BiometricError.authFailed
         }
         return (
@@ -70,7 +70,7 @@ final class BiometricStore {
     static func save(can: StoreOp, pin: StoreOp, pin2: StoreOp) async throws {
         let context = LAContext()
         let reason  = String(localized: "bio_prompt_title")
-        guard try await context.evaluatePolicy(.biometryAny, localizedReason: reason) else {
+        guard try await context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) else {
             throw BiometricError.authFailed
         }
         applyOp(op: can,  account: accountCan,  context: context)
@@ -129,7 +129,7 @@ final class BiometricStore {
         guard let access = SecAccessControlCreateWithFlags(
             nil,
             kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
-            .biometryAny,
+            .biometryCurrentSet,
             &accessError
         ) else { return }
 
@@ -144,9 +144,11 @@ final class BiometricStore {
             kSecAttrAccessControl:        access,
             kSecUseAuthenticationContext: context,
         ]
-        let status = SecItemUpdate(searchQuery as CFDictionary, updateAttrs as CFDictionary)
-        if status == errSecItemNotFound {
-            var addQuery: [CFString: Any] = [
+        let updateStatus = SecItemUpdate(searchQuery as CFDictionary, updateAttrs as CFDictionary)
+        if updateStatus != errSecSuccess {
+            // Delete any stale item first, then add fresh with access control
+            SecItemDelete(searchQuery as CFDictionary)
+            let addQuery: [CFString: Any] = [
                 kSecClass:                    kSecClassGenericPassword,
                 kSecAttrService:              service,
                 kSecAttrAccount:              account,

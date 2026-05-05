@@ -60,7 +60,7 @@ struct CityHallAuthScreen: View {
                     onDismiss: vm.dismissSaveDialog,
                     onNeverAsk: vm.neverAskSave
                 )
-                .presentationDetents([.medium])
+                .presentationDetents([.height(320)])
                 .presentationDragIndicator(.visible)
                 .background(Color.surfaceDark)
             }
@@ -142,6 +142,7 @@ private struct CityHallInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
+        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 }
 

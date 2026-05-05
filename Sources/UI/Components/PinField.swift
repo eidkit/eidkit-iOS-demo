@@ -14,9 +14,9 @@ struct PinField: View {
     @State private var showHelp = false
 
     @State private var userVisible = false
-    // Digits at index < maskedUpTo are always masked; digits >= maskedUpTo visible until timer fires.
     @State private var maskedUpTo: Int = 0
     @State private var prevLength: Int = 0
+    @State private var maskTask: Task<Void, Never>? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -76,8 +76,9 @@ struct PinField: View {
                     }
                 }
                 // "Șterge" clear link beside digit boxes
-                if maskable, let clear = onClear, !value.isEmpty {
+                if maskable, let clear = onClear {
                     Button {
+                        maskTask?.cancel()
                         maskedUpTo = 0
                         prevLength = 0
                         clear()
@@ -88,6 +89,7 @@ struct PinField: View {
                             .foregroundStyle(Color.white.opacity(0.6))
                     }
                     .buttonStyle(.plain)
+                    .opacity(value.isEmpty ? 0 : 1)
                 }
             }
             // Invisible text field captures input
@@ -117,10 +119,13 @@ struct PinField: View {
             let singleKeystroke = cur == prevLength + 1
             prevLength = cur
             if singleKeystroke {
-                // Show the new digit for 1s, then mask it
-                Task {
+                // Cancel any previous timer and start a fresh 1s countdown
+                maskTask?.cancel()
+                let countAtType = cur
+                maskTask = Task {
                     try? await Task.sleep(for: .seconds(1))
-                    maskedUpTo = value.count
+                    guard !Task.isCancelled else { return }
+                    maskedUpTo = max(maskedUpTo, countAtType)
                 }
             } else {
                 // Biometric pre-fill or paste: mask immediately

@@ -39,9 +39,8 @@ struct KycScreen: View {
                     onDismiss: vm.dismissSaveDialog,
                     onNeverAsk: vm.neverAskSave
                 )
-                .presentationDetents([.medium])
+                .presentationDetents([.height(320)])
                 .presentationDragIndicator(.visible)
-                .background(Color.surfaceDark)
             }
         }
         .task { await vm.tryBiometricLoad() }
@@ -124,6 +123,7 @@ private struct KycInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
+        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 
     private func binding(_ kp: WritableKeyPath<KycState.Input, String>, _ setter: @escaping (String) -> Void) -> Binding<String> {

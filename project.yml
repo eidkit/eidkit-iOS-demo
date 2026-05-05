@@ -58,12 +58,13 @@ targets:
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "1.4"
-        CFBundleVersion: "7"
+        CFBundleShortVersionString: "1.5"
+        CFBundleVersion: "8"
         CFBundleURLTypes:
           - CFBundleURLSchemes: [eidkit]
             CFBundleURLName: ro.eidkit.app
         NFCReaderUsageDescription: "NFC is required to scan your identity card."
+        NSFaceIDUsageDescription: "Face ID is used to securely save and retrieve your CAN and PIN."
         UILaunchStoryboardName: LaunchScreen
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         com.apple.developer.nfc.readersession.iso7816.select-identifiers:
@@ -77,8 +78,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: ro.eidkit.app
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
-        MARKETING_VERSION: "1.4"
-        CURRENT_PROJECT_VERSION: "7"
+        MARKETING_VERSION: "1.5"
+        CURRENT_PROJECT_VERSION: "8"
     dependencies:
       - package: EidKit
         product: EidKit
