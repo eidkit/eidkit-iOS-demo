@@ -51,14 +51,15 @@ struct EidKitApp: App
                         .forEach { $0.backgroundColor = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1) }
                 }
                 .onOpenURL { url in
-                    guard url.scheme == "eidkit",
-                          url.host == "auth",
-                          let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-                          let session = components.queryItems?.first(where: { $0.name == "session" })?.value,
-                          let callback = components.queryItems?.first(where: { $0.name == "callback" })?.value
+                    let isCustomScheme = url.scheme == "eidkit" && url.host == "auth"
+                    let isUniversalLink = url.scheme == "https" && url.host == "idp.eidkit.ro" && url.path.hasPrefix("/auth")
+                    let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+                    guard (isCustomScheme || isUniversalLink),
+                          let session = components?.queryItems?.first(where: { $0.name == "session" })?.value,
+                          let callback = components?.queryItems?.first(where: { $0.name == "callback" })?.value
                     else { return }
-                    let service = components.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
-                    let nonce   = components.queryItems?.first(where: { $0.name == "nonce" })?.value ?? ""
+                    let service = components?.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
+                    let nonce   = components?.queryItems?.first(where: { $0.name == "nonce" })?.value ?? ""
                     cityHallInput = CityHallInput(
                         sessionToken: session,
                         callbackUrl: callback,
