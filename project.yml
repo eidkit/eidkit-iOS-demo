@@ -49,6 +49,7 @@ targets:
       path: EidKitApp.entitlements
       properties:
         com.apple.developer.nfc.readersession.formats: [TAG, PACE]
+        com.apple.developer.associated-domains: [applinks:idp.eidkit.ro]
     info:
       path: Info.plist
       properties:
