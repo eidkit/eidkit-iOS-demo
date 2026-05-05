@@ -28,7 +28,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>9</string>
+	<string>10</string>
 	<key>NFCReaderUsageDescription</key>
 	<string>NFC is required to scan your identity card.</string>
 	<key>NSFaceIDUsageDescription</key>

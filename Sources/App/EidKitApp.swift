@@ -2,8 +2,8 @@ import SwiftUI
 import EidKit
 import OpenTelemetryApi
 
-class AppDelegate: NSObject, UIApplicationDelegate {
-    var pendingURL: URL? = nil
+class AppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
+    @Published var pendingURL: URL? = nil
 
     func application(_ application: UIApplication,
                      continue userActivity: NSUserActivity,
@@ -81,10 +81,15 @@ struct EidKitApp: App
                         .compactMap { $0 as? UIWindowScene }
                         .flatMap { $0.windows }
                         .forEach { $0.backgroundColor = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1) }
-                    if let url = appDelegate.pendingURL {
-                        appDelegate.pendingURL = nil
-                        handleURL(url)
-                    }
+                }
+                .onChange(of: appDelegate.pendingURL) { url in
+                    guard let url else { return }
+                    appDelegate.pendingURL = nil
+                    handleURL(url)
+                }
+                .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+                    guard let url = activity.webpageURL else { return }
+                    handleURL(url)
                 }
                 .onOpenURL { url in handleURL(url) }
         }
