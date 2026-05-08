@@ -33,9 +33,6 @@ packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
     exactVersion: "0.1.13"
-  Sentry:
-    url: https://github.com/getsentry/sentry-cocoa.git
-    from: "8.0.0"
 
 targets:
   EidKitApp:
@@ -69,9 +66,9 @@ targets:
             CFBundleURLName: ro.eidkit.app
         NFCReaderUsageDescription: "NFC is required to scan your identity card."
         NSFaceIDUsageDescription: "Face ID is used to securely save and retrieve your CAN and PIN."
+        SENTRY_DSN: "$(SENTRY_DSN)"
         UILaunchStoryboardName: LaunchScreen
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        SENTRY_DSN: "https://fdcafb5a707782f8ed6c38a44f07a31e@o203117.ingest.us.sentry.io/4511348849442816"
         com.apple.developer.nfc.readersession.iso7816.select-identifiers:
           - A0000002471001                      # ICAO LDS applet — first so iOS auto-selects ICAO on connect
           - A000000077030C60000000FE00000500    # National Application (AID1) 16-byte
@@ -90,8 +87,6 @@ targets:
         product: EidKit
       - package: EidKit
         product: EidKitOtlp
-      - package: Sentry
-        product: Sentry
 
   EidKitAppTests:
     type: bundle.unit-test
