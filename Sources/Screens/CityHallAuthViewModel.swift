@@ -96,7 +96,7 @@ final class CityHallAuthViewModel: ObservableObject {
                     instrumentationName: "eidkit-app", instrumentationVersion: nil)
                 let span = tracer.spanBuilder(spanName: "remote_auth")
                     .setSpanKind(spanKind: .internal)
-                    .setRemoteParent(spanCtx)
+                    .setParent(spanCtx)
                     .startSpan()
                 OpenTelemetry.instance.contextProvider.setActiveSpan(span)
                 return span

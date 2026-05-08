@@ -33,6 +33,9 @@ packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
     exactVersion: "0.1.13"
+  Sentry:
+    url: https://github.com/getsentry/sentry-cocoa.git
+    from: "8.0.0"
 
 targets:
   EidKitApp:
@@ -87,6 +90,8 @@ targets:
         product: EidKit
       - package: EidKit
         product: EidKitOtlp
+      - package: Sentry
+        product: Sentry
 
   EidKitAppTests:
     type: bundle.unit-test
