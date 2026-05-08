@@ -64,9 +64,9 @@ enum TelemetrySetup {
     // MARK: -
 
     #if DEBUG
-    private static let environment = "debug"
+    static let environment = "debug"
     #else
-    private static let environment = "production"
+    static let environment = "production"
     #endif
 
     private static var deviceModel: String {
