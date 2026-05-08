@@ -1,6 +1,7 @@
 import SwiftUI
 import EidKit
 import OpenTelemetryApi
+import Sentry
 
 class AppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
     @Published var pendingURL: URL? = nil
@@ -21,6 +22,14 @@ struct EidKitApp: App
 {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     init() {
+        if let dsn = Bundle.main.infoDictionary?["SENTRY_DSN"] as? String, !dsn.isEmpty {
+            SentrySDK.start { options in
+                options.dsn = dsn
+                options.environment = TelemetrySetup.environment
+                options.enableCrashHandler = true
+                options.tracesSampleRate = 0   // tracing via OTel/OTLP; crashes only
+            }
+        }
         do {
             OpenTelemetry.registerTracerProvider(tracerProvider: TelemetrySetup.provider)
             try EidKitSdk.configure(EidKitConfig(licenseToken: "eidkit-demo-app", onSpan: TelemetrySetup.adapter.onSpan))
@@ -61,13 +70,15 @@ struct EidKitApp: App
               let session = components?.queryItems?.first(where: { $0.name == "session" })?.value,
               let callback = components?.queryItems?.first(where: { $0.name == "callback" })?.value
         else { return }
-        let service = components?.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
-        let nonce   = components?.queryItems?.first(where: { $0.name == "nonce" })?.value ?? ""
+        let service      = components?.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
+        let nonce        = components?.queryItems?.first(where: { $0.name == "nonce" })?.value ?? ""
+        let traceparent  = components?.queryItems?.first(where: { $0.name == "traceparent" })?.value
         cityHallInput = CityHallInput(
             sessionToken: session,
             callbackUrl: callback,
             serviceName: service,
-            nonce: nonce
+            nonce: nonce,
+            traceparent: traceparent
         )
     }
 

@@ -1,5 +1,6 @@
 import Foundation
 import EidKit
+import OpenTelemetryApi
 
 struct CityHallInput: Identifiable {
     let id = UUID()
@@ -7,6 +8,7 @@ struct CityHallInput: Identifiable {
     let callbackUrl: String
     let serviceName: String
     let nonce: String
+    var traceparent: String? = nil
 }
 
 enum CityHallAuthState {
@@ -86,6 +88,25 @@ final class CityHallAuthViewModel: ObservableObject {
         state = .scanning(.init())
         scanTask?.cancel()
         scanTask = Task {
+            // If a traceparent was passed from the SSO deep link, create an app-level span
+            // as a child of the SSO server transaction. The SDK session span inherits this
+            // automatically because EidKit reads the active OTel span at session start.
+            let appSpan: (any Span)? = parseTraceparent(input.traceparent).flatMap { spanCtx in
+                let tracer = OpenTelemetry.instance.tracerProvider.get(
+                    instrumentationName: "eidkit-app", instrumentationVersion: nil)
+                let span = tracer.spanBuilder(spanName: "remote_auth")
+                    .setSpanKind(spanKind: .internal)
+                    .setRemoteParent(spanCtx)
+                    .startSpan()
+                OpenTelemetry.instance.contextProvider.setActiveSpan(span)
+                return span
+            }
+            defer {
+                if let s = appSpan {
+                    s.end()
+                    OpenTelemetry.instance.contextProvider.removeContextForSpan(s)
+                }
+            }
             do {
                 let nonceData: Data? = savedInput.nonce.isEmpty ? nil : hexToData(savedInput.nonce)
                 let reader = try EidKitSdk.reader(can: savedInput.can)
@@ -250,6 +271,15 @@ final class CityHallAuthViewModel: ObservableObject {
         request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 15
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        if let span = OpenTelemetry.instance.contextProvider.activeSpan {
+            let sc = span.context
+            let traceId = sc.traceId.hexString
+            let spanId  = sc.spanId.hexString
+            let sampled = sc.traceFlags.sampled
+            let flagsHex = sampled ? "01" : "00"
+            request.setValue("00-\(traceId)-\(spanId)-\(flagsHex)", forHTTPHeaderField: "traceparent")
+            request.setValue("\(traceId)-\(spanId)-\(sampled ? "1" : "0")", forHTTPHeaderField: "sentry-trace")
+        }
         let (_, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, http.statusCode != 200 {
             throw URLError(.badServerResponse)
@@ -272,4 +302,25 @@ final class CityHallAuthViewModel: ObservableObject {
         guard s.count == 8 else { return s }
         return "\(s.suffix(4))-\(s.dropFirst(2).prefix(2))-\(s.prefix(2))"
     }
+}
+
+// Parses a W3C traceparent header value into an OTel SpanContext.
+// Format: 00-<traceId:32hex>-<spanId:16hex>-<flags:2hex>
+private func parseTraceparent(_ traceparent: String?) -> SpanContext? {
+    guard let tp = traceparent else { return nil }
+    let parts = tp.split(separator: "-", omittingEmptySubsequences: false)
+    guard parts.count == 4,
+          parts[0] == "00",
+          parts[1].count == 32,
+          parts[2].count == 16,
+          let flags = UInt8(parts[3], radix: 16) else { return nil }
+    let traceId = TraceId(fromHexString: String(parts[1]))
+    let spanId  = SpanId(fromHexString: String(parts[2]))
+    guard traceId.isValid, spanId.isValid else { return nil }
+    return SpanContext.createFromRemoteParent(
+        traceId: traceId,
+        spanId: spanId,
+        traceFlags: TraceFlags(fromByte: flags),
+        traceState: TraceState()
+    )
 }
