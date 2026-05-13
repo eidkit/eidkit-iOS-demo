@@ -41,6 +41,10 @@
 /* Auth screen */
 "auth_title" = "Autentificare";
 "auth_pin_hint" = "Acesta este PIN-ul de 4 cifre setat la activarea cardului la MAI (nu PIN-ul de semnare)";
+"auth_sso_callout_title" = "Autentificare completă necesită mai mult";
+"auth_sso_callout_body" = "Această demonstrație dovedește că cipul este autentic, dar nu leagă identitatea citită de cipul care a semnat. Un atacator cu CAN-ul victimei ar putea separa dovezile. EidKit SSO rezolvă asta cu Chip Authentication server-side.";
+"auth_sso_callout_cta_demo" = "Încearcă demo-ul SSO →";
+"auth_sso_callout_cta_docs" = "Documentație SSO";
 
 /* Signing screen */
 "signing_title" = "Semnare document";

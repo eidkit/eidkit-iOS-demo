@@ -41,6 +41,10 @@
 /* Auth screen */
 "auth_title" = "Authentication";
 "auth_pin_hint" = "This is the 4-digit PIN set during card activation at MAI (not the signing PIN)";
+"auth_sso_callout_title" = "Full authentication needs more";
+"auth_sso_callout_body" = "This demo proves the chip is genuine, but doesn't bind the read identity to the signing chip. An attacker with the victim's CAN could split the proof. EidKit SSO closes this with server-side Chip Authentication.";
+"auth_sso_callout_cta_demo" = "Try the SSO demo →";
+"auth_sso_callout_cta_docs" = "SSO documentation";
 
 /* Signing screen */
 "signing_title" = "Document Signing";

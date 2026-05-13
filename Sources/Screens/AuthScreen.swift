@@ -90,6 +90,8 @@ private struct AuthInputContent: View {
                      onClear: { vm.onPinChange("") }) { }
             .focused($focus, equals: .pin)
 
+            SsoCalloutCard()
+
             if state.canSubmit {
                 Button {
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -154,6 +156,7 @@ private struct AuthSuccessContent: View {
                 : String(localized: "result_active_auth_failed")
         }()
 
+        SsoCalloutCard()
         ResultCard(title: title, isError: !isVerified, onRetry: onRetry) {
             switch result.activeAuth {
             case .verified(let cert):
@@ -183,5 +186,45 @@ private struct AuthSuccessContent: View {
                 ResultRow(label: String(localized: "result_claim_ready"), value: "✓")
             }
         }
+    }
+}
+
+// MARK: - SSO Callout
+
+private struct SsoCalloutCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(String(localized: "auth_sso_callout_title"), systemImage: "shield.lefthalf.filled")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.electricBlue)
+
+            Text(String(localized: "auth_sso_callout_body"))
+                .font(.caption)
+                .foregroundStyle(Color.white.opacity(0.7))
+
+            Button {
+                UIApplication.shared.open(URL(string: "https://primariatm.eidkit.ro/")!)
+            } label: {
+                Text(String(localized: "auth_sso_callout_cta_demo"))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.electricBlue)
+
+            Button {
+                UIApplication.shared.open(URL(string: "https://eidkit.ro/sso")!)
+            } label: {
+                Text(String(localized: "auth_sso_callout_cta_docs"))
+                    .font(.caption)
+                    .foregroundStyle(Color.white.opacity(0.5))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.surfaceCard)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.surfaceBorder, lineWidth: 1))
     }
 }
