@@ -32,7 +32,7 @@ schemes:
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
-    exactVersion: "0.1.13"
+    exactVersion: "0.1.14"
   Sentry:
     url: https://github.com/getsentry/sentry-cocoa.git
     from: "8.0.0"
@@ -62,8 +62,8 @@ targets:
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: APPL
-        CFBundleShortVersionString: "1.7"
-        CFBundleVersion: "11"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleURLTypes:
           - CFBundleURLSchemes: [eidkit]
             CFBundleURLName: ro.eidkit.app
@@ -83,8 +83,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: ro.eidkit.app
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
-        MARKETING_VERSION: "1.7"
-        CURRENT_PROJECT_VERSION: "11"
+        MARKETING_VERSION: "1.8"
+        CURRENT_PROJECT_VERSION: "12"
     dependencies:
       - package: EidKit
         product: EidKit
