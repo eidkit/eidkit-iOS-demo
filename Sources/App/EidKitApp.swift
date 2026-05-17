@@ -68,16 +68,15 @@ struct EidKitApp: App
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         guard (isCustomScheme || isUniversalLink),
               let session = components?.queryItems?.first(where: { $0.name == "session" })?.value,
-              let callback = components?.queryItems?.first(where: { $0.name == "callback" })?.value
+              let wssString = components?.queryItems?.first(where: { $0.name == "wss" })?.value,
+              let wsUrl = URL(string: wssString)
         else { return }
-        let service      = components?.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
-        let nonce        = components?.queryItems?.first(where: { $0.name == "nonce" })?.value ?? ""
-        let traceparent  = components?.queryItems?.first(where: { $0.name == "traceparent" })?.value
+        let service     = components?.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
+        let traceparent = components?.queryItems?.first(where: { $0.name == "traceparent" })?.value
         cityHallInput = CityHallInput(
             sessionToken: session,
-            callbackUrl: callback,
+            wsUrl: wsUrl,
             serviceName: service,
-            nonce: nonce,
             traceparent: traceparent
         )
     }

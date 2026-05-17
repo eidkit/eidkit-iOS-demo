@@ -71,11 +71,10 @@ struct CityHallAuthScreen: View {
     @ViewBuilder
     private var content: some View {
         switch vm.state {
-        case .input(let s):    CityHallInputContent(state: s, vm: vm)
-        case .scanning(let s): CityHallScanningContent(state: s)
-        case .posting:         CityHallPostingContent()
+        case .input(let s):      CityHallInputContent(state: s, vm: vm)
+        case .scanning(let s):   CityHallScanningContent(state: s)
         case .success(let name): CityHallSuccessContent(name: name, onDone: onDismiss)
-        case .error(let msg):  ErrorContent(message: msg, onRetry: { vm.retry() })
+        case .error(let msg):    ErrorContent(message: msg, onRetry: { vm.retry() })
         }
     }
 }
@@ -185,7 +184,9 @@ private struct CityHallSuccessContent: View {
                 .foregroundStyle(Color.electricBlue)
                 .padding(.top, 40)
 
-            Text(String(format: String(localized: "cityhall_success_message"), name))
+            Text(name.isEmpty
+                ? String(localized: "cityhall_success_message_generic")
+                : String(format: String(localized: "cityhall_success_message"), name))
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color.white)
@@ -202,17 +203,3 @@ private struct CityHallSuccessContent: View {
     }
 }
 
-// MARK: - Posting
-
-private struct CityHallPostingContent: View {
-    var body: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .tint(.white)
-            Text(String(localized: "cityhall_posting"))
-                .foregroundStyle(Color.white.opacity(0.7))
-                .font(.caption)
-        }
-        .padding(.top, 40)
-    }
-}
