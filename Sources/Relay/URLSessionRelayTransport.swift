@@ -1,20 +1,39 @@
 import Foundation
 import EidKit
 
-/// `NfcRelayTransport` implementation using `URLSessionWebSocketTask` (iOS 13+).
-///
-/// `URLSession` WebSocket tasks are considered connected after `resume()` — there is no
-/// explicit open callback. We start the receive loop immediately and return from `connect`
-/// once the task is running.
 final class URLSessionRelayTransport: NfcRelayTransport {
 
     private var task: URLSessionWebSocketTask?
+    private var sdkFrameHandler: ((String) -> Void)?
+    private var preConnectContinuation: CheckedContinuation<String, Error>?
 
-    func connect(url: URL, onFrame: @escaping (String) -> Void) async throws {
+    // Called before attestation — opens WebSocket, buffers incoming frames
+    func connectForAttestation(url: URL) async throws {
         let t = URLSession.shared.webSocketTask(with: url)
         self.task = t
         t.resume()
-        receiveLoop(task: t, onFrame: onFrame)
+        receiveLoop(task: t)
+    }
+
+    // Waits for the next buffered pre-connect frame
+    func receiveFrame() async throws -> String {
+        try await withCheckedThrowingContinuation { continuation in
+            preConnectContinuation = continuation
+        }
+    }
+
+    // NfcRelayTransport — called by EidKit.relay()
+    func connect(url: URL, onFrame: @escaping (String) -> Void) async throws {
+        if task != nil {
+            // Already connected via connectForAttestation — just register SDK handler
+            sdkFrameHandler = onFrame
+            return
+        }
+        let t = URLSession.shared.webSocketTask(with: url)
+        self.task = t
+        sdkFrameHandler = onFrame
+        t.resume()
+        receiveLoop(task: t)
     }
 
     func sendFrame(_ json: String) throws {
@@ -27,11 +46,17 @@ final class URLSessionRelayTransport: NfcRelayTransport {
         task = nil
     }
 
-    private func receiveLoop(task: URLSessionWebSocketTask, onFrame: @escaping (String) -> Void) {
+    private func receiveLoop(task: URLSessionWebSocketTask) {
         task.receive { [weak self] result in
-            guard let self, case .success(let msg) = result else { return }
-            if case .string(let s) = msg { onFrame(s) }
-            self.receiveLoop(task: task, onFrame: onFrame)
+            guard let self else { return }
+            guard case .success(let msg) = result, case .string(let s) = msg else { return }
+            if let handler = self.sdkFrameHandler {
+                handler(s)
+            } else if let cont = self.preConnectContinuation {
+                self.preConnectContinuation = nil
+                cont.resume(returning: s)
+            }
+            self.receiveLoop(task: task)
         }
     }
 }

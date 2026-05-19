@@ -11,5 +11,7 @@
 		<string>TAG</string>
 		<string>PACE</string>
 	</array>
+	<key>com.apple.developer.app-attest</key>
+	<string>production</string>
 </dict>
 </plist>

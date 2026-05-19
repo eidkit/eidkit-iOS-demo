@@ -62,6 +62,15 @@ struct EidKitApp: App
 
     @State private var cityHallInput: CityHallInput? = nil
 
+    private func isAllowedWsUrl(_ url: URL) -> Bool {
+        guard let host = url.host else { return false }
+        if host == "idp.eidkit.ro" { return true }
+        #if DEBUG
+        if host == "localhost" || host.hasPrefix("192.168.") { return true }
+        #endif
+        return false
+    }
+
     private func handleURL(_ url: URL) {
         let isCustomScheme = url.scheme == "eidkit" && url.host == "auth"
         let isUniversalLink = url.scheme == "https" && url.host == "idp.eidkit.ro" && url.path.hasPrefix("/auth")
@@ -69,7 +78,8 @@ struct EidKitApp: App
         guard (isCustomScheme || isUniversalLink),
               let session = components?.queryItems?.first(where: { $0.name == "session" })?.value,
               let wssString = components?.queryItems?.first(where: { $0.name == "wss" })?.value,
-              let wsUrl = URL(string: wssString)
+              let wsUrl = URL(string: wssString),
+              isAllowedWsUrl(wsUrl)
         else { return }
         let service     = components?.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
         let traceparent = components?.queryItems?.first(where: { $0.name == "traceparent" })?.value

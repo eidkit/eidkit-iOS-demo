@@ -102,6 +102,9 @@ final class CityHallAuthViewModel: ObservableObject {
             }
             do {
                 let transport = URLSessionRelayTransport()
+                let attester = AppAttestProvider()
+                try await transport.connectForAttestation(url: savedInput.wsUrl)
+                await performAttestation(provider: attester, transport: transport)
                 try await EidKitSdk.relay(
                     alertMessage: alertMessage,
                     cardConnectedMessage: String(localized: "nfc_card_connected_warning", locale: appLocale),

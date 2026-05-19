@@ -53,6 +53,7 @@ targets:
       properties:
         com.apple.developer.nfc.readersession.formats: [TAG, PACE]
         com.apple.developer.associated-domains: [applinks:idp.eidkit.ro]
+        com.apple.developer.app-attest: production
     info:
       path: Info.plist
       properties:
