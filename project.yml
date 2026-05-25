@@ -84,7 +84,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: ro.eidkit.app
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
-        MARKETING_VERSION: "1.8"
+        MARKETING_VERSION: "1.9"
         CURRENT_PROJECT_VERSION: "13"
     dependencies:
       - package: EidKit
