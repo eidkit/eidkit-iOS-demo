@@ -14,7 +14,7 @@ enum CityHallAuthState {
     case input(Input)
     case scanning(Scanning)
     case success(String)
-    case error(String)
+    case error(String, traceId: String?)
 
     struct Input {
         var can: String = ""
@@ -123,15 +123,17 @@ final class CityHallAuthViewModel: ObservableObject {
             } catch is CancellationError {
                 state = .input(savedInput)
             } catch let e as CeiError {
+                let traceId = appSpan?.context.traceId.hexString
                 switch e {
                 case .cardLost:        state = .input(savedInput)
-                case .wrongPin(let r): state = .error("wrong_pin:\(r)")
-                case .pinBlocked:      state = .error("pin_blocked")
-                case .paceFailure:     state = .error("pace_failed")
-                default:               state = .error("card_error:\(e)")
+                case .wrongPin(let r): state = .error("wrong_pin:\(r)", traceId: traceId)
+                case .pinBlocked:      state = .error("pin_blocked", traceId: traceId)
+                case .paceFailure:     state = .error("pace_failed", traceId: traceId)
+                default:               state = .error("card_error:\(e)", traceId: traceId)
                 }
             } catch {
-                state = .error("network:\(error.localizedDescription)")
+                let traceId = appSpan?.context.traceId.hexString
+                state = .error("network:\(error.localizedDescription)", traceId: traceId)
             }
         }
         cancelScan = { [weak self] in self?.scanTask?.cancel() }

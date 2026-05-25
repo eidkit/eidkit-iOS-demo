@@ -74,7 +74,7 @@ struct CityHallAuthScreen: View {
         case .input(let s):      CityHallInputContent(state: s, vm: vm)
         case .scanning(let s):   CityHallScanningContent(state: s)
         case .success(let name): CityHallSuccessContent(name: name, onDone: onDismiss)
-        case .error(let msg):    ErrorContent(message: msg, onRetry: { vm.retry() })
+        case .error(let msg, let traceId): ErrorContent(message: msg, traceId: traceId, onRetry: { vm.retry() })
         }
     }
 }

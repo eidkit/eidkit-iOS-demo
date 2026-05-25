@@ -34,13 +34,24 @@ func ceiErrorCode(_ error: Error) -> String {
 
 // MARK: - Error display
 
+private let serverRejectionCodes: Set<String> = [
+    "name_mismatch", "dg1_hash_mismatch", "dg14_hash_mismatch",
+    "active_auth_failed", "cnp_mismatch", "cnp_extraction_failed", "cnp_edata_extraction_failed",
+]
+
 struct ErrorContent: View {
     let message: String
+    var traceId: String? = nil
     let onRetry: () -> Void
 
     var body: some View {
+        let showContact = serverRejectionCodes.contains(message) || message.hasPrefix("generic:")
         ResultCard(title: localizedError(message), isError: true, onRetry: onRetry) {
-            EmptyView()
+            if showContact, let tid = traceId {
+                Text(String(format: String(localized: "error_contact_us"), String(tid.prefix(8))))
+                    .font(.caption)
+                    .foregroundStyle(Color.white.opacity(0.7))
+            }
         }
     }
 
@@ -50,9 +61,10 @@ struct ErrorContent: View {
             return String(format: String(localized: "error_wrong_pin"), n)
         }
         switch code {
-        case "pin_blocked":  return String(localized: "error_pin_blocked")
-        case "card_lost":    return String(localized: "error_card_lost")
-        case "pace_failed":  return String(localized: "error_pace_failed")
+        case "pin_blocked":                            return String(localized: "error_pin_blocked")
+        case "card_lost":                              return String(localized: "error_card_lost")
+        case "pace_failed":                            return String(localized: "error_pace_failed")
+        case _ where serverRejectionCodes.contains(code): return String(localized: "error_server_rejection")
         default:
             let msg = code.hasPrefix("generic:") ? String(code.dropFirst("generic:".count)) : code
             return String(format: String(localized: "error_generic"), msg)

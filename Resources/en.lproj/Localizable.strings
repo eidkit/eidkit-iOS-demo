@@ -172,4 +172,6 @@
 "error_card_lost" = "Card moved — hold it steady and try again";
 "error_pace_failed" = "PACE failed — check the CAN and try again";
 "error_generic" = "Error: %@";
+"error_server_rejection" = "Authentication rejected by server";
+"error_contact_us" = "If you think this is a mistake, contact us: support@eidkit.ro\nReference: %@";
 "error_nfc_unavailable" = "NFC is not available or is disabled on this device";

@@ -170,4 +170,6 @@
 "error_card_lost" = "Cardul s-a mișcat — țineți-l stabil și încercați din nou";
 "error_pace_failed" = "PACE eșuat — verificați CAN-ul și încercați din nou";
 "error_generic" = "Eroare: %@";
+"error_server_rejection" = "Autentificare respinsă de server";
+"error_contact_us" = "Dacă crezi că e o eroare, contactează-ne: support@eidkit.ro\nReferință: %@";
 "error_nfc_unavailable" = "NFC nu este disponibil sau este dezactivat pe acest dispozitiv";
