@@ -32,7 +32,7 @@ schemes:
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
-    exactVersion: "0.1.14"
+    exactVersion: "0.1.16"
   Sentry:
     url: https://github.com/getsentry/sentry-cocoa.git
     from: "8.0.0"
@@ -53,7 +53,7 @@ targets:
       properties:
         com.apple.developer.nfc.readersession.formats: [TAG, PACE]
         com.apple.developer.associated-domains: [applinks:idp.eidkit.ro]
-        com.apple.developer.app-attest: production
+        com.apple.developer.devicecheck.appattest-environment: production
     info:
       path: Info.plist
       properties:
@@ -85,7 +85,7 @@ targets:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.8"
-        CURRENT_PROJECT_VERSION: "12"
+        CURRENT_PROJECT_VERSION: "13"
     dependencies:
       - package: EidKit
         product: EidKit

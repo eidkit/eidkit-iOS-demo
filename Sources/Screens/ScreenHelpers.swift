@@ -48,9 +48,9 @@ struct ErrorContent: View {
         let showContact = serverRejectionCodes.contains(message) || message.hasPrefix("generic:")
         ResultCard(title: localizedError(message), isError: true, onRetry: onRetry) {
             if showContact, let tid = traceId {
-                Text(String(format: String(localized: "error_contact_us"), String(tid.prefix(8))))
-                    .font(.caption)
-                    .foregroundStyle(Color.white.opacity(0.7))
+                Text(String(format: String(localized: "error_contact_us"), String(tid.prefix(16))))
+                    .font(.footnote)
+                    .foregroundStyle(Color.white.opacity(0.85))
             }
         }
     }
