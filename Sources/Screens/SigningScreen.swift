@@ -141,7 +141,6 @@ private struct SigningInputContent: View {
     let vm: SigningViewModel
     let onChangePdf: () -> Void
     @FocusState private var focus: Field?
-    @State private var hasCredentials = BiometricStore.hasCredentials()
     enum Field { case can, pin }
 
     var body: some View {
@@ -190,23 +189,6 @@ private struct SigningInputContent: View {
                      onClear: { vm.onPinChange("") }) { }
             .focused($focus, equals: .pin)
 
-            if hasCredentials {
-                HStack {
-                    Spacer()
-                    Button {
-                        BiometricStore.clear()
-                        hasCredentials = false
-                        vm.onCanChange("")
-                        vm.onPinChange("")
-                    } label: {
-                        Text(String(localized: "bio_forget"))
-                            .font(.caption)
-                            .foregroundStyle(Color.errorRed)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
             if state.canSubmit {
                 Button {
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -218,7 +200,6 @@ private struct SigningInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
-        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 }
 

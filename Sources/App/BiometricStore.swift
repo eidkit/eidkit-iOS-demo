@@ -78,6 +78,43 @@ final class BiometricStore {
         applyOp(op: pin2, account: accountPin2, context: context)
     }
 
+    // MARK: - Per-field presence
+
+    static func hasField(_ field: Field) -> Bool {
+        let account = accountFor(field)
+        let query: [CFString: Any] = [
+            kSecClass:               kSecClassGenericPassword,
+            kSecAttrService:         service,
+            kSecAttrAccount:         account,
+            kSecReturnData:          false,
+            kSecUseAuthenticationUI: kSecUseAuthenticationUIFail,
+        ]
+        let status = SecItemCopyMatching(query as CFDictionary, nil)
+        return status == errSecSuccess || status == errSecInteractionNotAllowed
+    }
+
+    enum Field { case can, pin, pin2 }
+
+    private static func accountFor(_ field: Field) -> String {
+        switch field {
+        case .can:  return accountCan
+        case .pin:  return accountPin
+        case .pin2: return accountPin2
+        }
+    }
+
+    // MARK: - Clear field (requires biometric)
+
+    static func clearField(_ field: Field) async throws {
+        let op: (can: StoreOp, pin: StoreOp, pin2: StoreOp)
+        switch field {
+        case .can:  op = (.write(nil), .skip, .skip)
+        case .pin:  op = (.skip, .write(nil), .skip)
+        case .pin2: op = (.skip, .skip, .write(nil))
+        }
+        try await save(can: op.can, pin: op.pin, pin2: op.pin2)
+    }
+
     // MARK: - Clear
 
     static func clear() {

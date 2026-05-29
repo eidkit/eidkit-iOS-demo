@@ -63,7 +63,6 @@ private struct KycInputContent: View {
     let state: KycState.Input
     let vm: KycViewModel
     @FocusState private var focus: Field?
-    @State private var hasCredentials = BiometricStore.hasCredentials()
     enum Field { case can, pin }
 
     var body: some View {
@@ -95,23 +94,6 @@ private struct KycInputContent: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            if hasCredentials {
-                HStack {
-                    Spacer()
-                    Button {
-                        BiometricStore.clear()
-                        hasCredentials = false
-                        vm.onCanChange("")
-                        vm.onPinChange("")
-                    } label: {
-                        Text(String(localized: "bio_forget"))
-                            .font(.caption)
-                            .foregroundStyle(Color.errorRed)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
             if state.canSubmit {
                 Button {
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -123,7 +105,6 @@ private struct KycInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
-        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 
     private func binding(_ kp: WritableKeyPath<KycState.Input, String>, _ setter: @escaping (String) -> Void) -> Binding<String> {

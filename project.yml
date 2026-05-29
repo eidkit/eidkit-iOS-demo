@@ -32,7 +32,7 @@ schemes:
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
-    exactVersion: "0.1.16"
+    exactVersion: "0.1.17"
   Sentry:
     url: https://github.com/getsentry/sentry-cocoa.git
     from: "8.0.0"
@@ -85,7 +85,7 @@ targets:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.9"
-        CURRENT_PROJECT_VERSION: "13"
+        CURRENT_PROJECT_VERSION: "14"
     dependencies:
       - package: EidKit
         product: EidKit

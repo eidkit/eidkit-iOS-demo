@@ -11,8 +11,8 @@ struct HomeScreen: View {
             NavigationStack { SigningScreen() }
                 .tabItem { Label("tab_signing", systemImage: "signature") }
 
-            NavigationStack { AuthScreen() }
-                .tabItem { Label("tab_auth", systemImage: "shield.lefthalf.filled") }
+            SavedDataScreen()
+                .tabItem { Label("tab_saved", systemImage: "externaldrive") }
         }
         .tint(Color.electricBlue)
         .fullScreenCover(item: $cityHallInput) { input in

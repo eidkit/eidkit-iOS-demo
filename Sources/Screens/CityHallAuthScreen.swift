@@ -73,6 +73,8 @@ struct CityHallAuthScreen: View {
         switch vm.state {
         case .input(let s):      CityHallInputContent(state: s, vm: vm)
         case .scanning(let s):   CityHallScanningContent(state: s)
+        case .emailInput(let s): CityHallEmailInputContent(state: s, vm: vm)
+        case .otpInput(let s):   CityHallOtpInputContent(state: s, vm: vm)
         case .success(let name): CityHallSuccessContent(name: name, onDone: onDismiss)
         case .error(let msg, let traceId): ErrorContent(message: msg, traceId: traceId, onRetry: { vm.retry() })
         }
@@ -85,7 +87,6 @@ private struct CityHallInputContent: View {
     let state: CityHallAuthState.Input
     let vm: CityHallAuthViewModel
     @FocusState private var focus: Field?
-    @State private var hasCredentials = BiometricStore.hasCredentials()
     enum Field { case can, pin }
 
     var body: some View {
@@ -113,23 +114,6 @@ private struct CityHallInputContent: View {
                      onClear: { vm.onPinChange("") }) { }
             .focused($focus, equals: .pin)
 
-            if hasCredentials {
-                HStack {
-                    Spacer()
-                    Button {
-                        BiometricStore.clear()
-                        hasCredentials = false
-                        vm.onCanChange("")
-                        vm.onPinChange("")
-                    } label: {
-                        Text(String(localized: "bio_forget"))
-                            .font(.caption)
-                            .foregroundStyle(Color.errorRed)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
             if state.canSubmit {
                 Button {
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -141,7 +125,6 @@ private struct CityHallInputContent: View {
                 .tint(Color.electricBlue)
             }
         }
-        .onAppear { hasCredentials = BiometricStore.hasCredentials() }
     }
 }
 
@@ -168,6 +151,90 @@ private struct CityHallScanningContent: View {
         if state.completedSteps.contains(where: { $0 == step }) { return .done }
         if state.activeStep == step { return .active }
         return .pending
+    }
+}
+
+// MARK: - Email Input
+
+private struct CityHallEmailInputContent: View {
+    let state: CityHallAuthState.EmailInput
+    let vm: CityHallAuthViewModel
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text(String(localized: "email_input_hint"))
+                .font(.caption)
+                .foregroundStyle(Color.white.opacity(0.6))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            TextField(String(localized: "label_email"), text: Binding(
+                get: { state.email },
+                set: vm.onEmailChange
+            ))
+            .keyboardType(.emailAddress)
+            .autocapitalization(.none)
+            .textContentType(.emailAddress)
+            .padding(12)
+            .background(Color.white.opacity(0.08))
+            .cornerRadius(8)
+            .foregroundStyle(Color.white)
+
+            Toggle(String(localized: "email_remember"), isOn: Binding(
+                get: { state.remember },
+                set: vm.onEmailRememberChange
+            ))
+            .font(.caption)
+            .foregroundStyle(Color.white.opacity(0.7))
+
+            Button {
+                vm.submitEmail()
+            } label: {
+                Text(String(localized: "action_continue")).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.electricBlue)
+            .disabled(state.email.isEmpty)
+        }
+    }
+}
+
+// MARK: - OTP Input
+
+private struct CityHallOtpInputContent: View {
+    let state: CityHallAuthState.OtpInput
+    let vm: CityHallAuthViewModel
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text(String(format: String(localized: "otp_hint"), state.email))
+                .font(.caption)
+                .foregroundStyle(Color.white.opacity(0.6))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            PinField(
+                label: String(localized: "label_otp"),
+                maxLength: 6,
+                value: Binding(get: { state.code }, set: vm.onOtpChange),
+                maskable: false,
+                onClear: { vm.onOtpChange("") }
+            ) { }
+
+            Toggle(String(localized: "email_remember"), isOn: Binding(
+                get: { state.remember },
+                set: vm.onOtpRememberChange
+            ))
+            .font(.caption)
+            .foregroundStyle(Color.white.opacity(0.7))
+
+            Button {
+                vm.submitOtp()
+            } label: {
+                Text(String(localized: "action_verify")).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.electricBlue)
+            .disabled(state.code.count != 6)
+        }
     }
 }
 

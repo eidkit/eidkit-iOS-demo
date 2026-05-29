@@ -164,6 +164,28 @@
 "pdf_ok" = "OK";
 "pdf_fail" = "EȘUAT";
 
+/* Email verification */
+"label_email" = "Adresă de email";
+"label_otp" = "Cod de verificare (6 cifre)";
+"email_input_hint" = "Introduceți adresa de email pe care doriți să o asociați cu acest serviciu.";
+"otp_hint" = "Am trimis un cod de 6 cifre la %@. Introduceți-l mai jos.";
+"email_remember" = "Reține pentru sesiunile viitoare";
+"action_continue" = "Continuă";
+"action_verify" = "Verifică";
+
+/* Saved data screen */
+"tab_saved" = "Date salvate";
+"saved_data_title" = "Date salvate";
+"saved_data_subtitle" = "Gestionează codurile și emailurile reținute pe acest dispozitiv.";
+"saved_data_section_credentials" = "Credențiale";
+"saved_data_section_emails" = "Emailuri reținute";
+"saved_data_credentials_label" = "CAN, PIN autentificare, PIN semnare";
+"saved_data_field_saved" = "Salvat";
+"saved_data_field_not_saved" = "Nesalvat";
+"saved_data_action_clear" = "Șterge";
+"saved_data_action_forget" = "Uită";
+"saved_data_no_emails" = "Nu există emailuri reținute.";
+
 /* Errors */
 "error_wrong_pin" = "PIN greșit — mai rămân %d încercări";
 "error_pin_blocked" = "PIN blocat — prezentați-vă la un ghișeu MAI pentru deblocare";

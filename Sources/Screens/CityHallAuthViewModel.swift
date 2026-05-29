@@ -13,6 +13,8 @@ struct CityHallInput: Identifiable {
 enum CityHallAuthState {
     case input(Input)
     case scanning(Scanning)
+    case emailInput(EmailInput)
+    case otpInput(OtpInput)
     case success(String)
     case error(String, traceId: String?)
 
@@ -29,6 +31,24 @@ enum CityHallAuthState {
         var completedSteps: [ReadEvent] = []
         var activeStep: ReadEvent? = nil
     }
+
+    struct EmailInput {
+        let prefill: String?
+        let clientId: String
+        var email: String
+        var remember: Bool = false
+        init(prefill: String?, clientId: String = "") {
+            self.prefill = prefill; self.clientId = clientId; self.email = prefill ?? ""
+        }
+    }
+
+    struct OtpInput {
+        let email: String
+        let clientId: String
+        var code: String = ""
+        var remember: Bool = false
+        init(email: String, clientId: String = "") { self.email = email; self.clientId = clientId }
+    }
 }
 
 @MainActor
@@ -39,6 +59,8 @@ final class CityHallAuthViewModel: ObservableObject {
     private let input: CityHallInput
     var cancelScan: (() -> Void)?
     var onSuccess: (() -> Void)?
+
+    private var activeTransport: URLSessionRelayTransport?
 
     private var snapshot: (can: String?, pin: String?, pin2: String?) = (nil, nil, nil)
     @Published var saveDialog: SaveDialogState? = nil
@@ -102,6 +124,7 @@ final class CityHallAuthViewModel: ObservableObject {
             }
             do {
                 let transport = URLSessionRelayTransport()
+                activeTransport = transport
                 let attester = AppAttestProvider()
                 try await transport.connectForAttestation(url: savedInput.wsUrl)
                 await performAttestation(provider: attester, transport: transport)
@@ -111,18 +134,25 @@ final class CityHallAuthViewModel: ObservableObject {
                     can: savedInput.can,
                     pin: savedInput.pin,
                     wsUrl: savedInput.wsUrl,
-                    transport: transport
-                ) { [weak self] event in
-                    Task { @MainActor [weak self] in self?.advance(event: event) }
-                }
+                    transport: transport,
+                    onEvent: { [weak self] event in
+                        Task { @MainActor [weak self] in self?.advance(event: event) }
+                    },
+                    onUnknownFrame: { [weak self] type, frame in
+                        Task { @MainActor [weak self] in self?.handleRelayFrame(type: type, frame: frame) }
+                    }
+                )
 
+                activeTransport = nil
                 let dialog = buildSaveDialog(scannedCan: savedInput.can, scannedPin: savedInput.pin)
                 saveDialog = dialog
                 state = .success("")
 
             } catch is CancellationError {
+                activeTransport = nil
                 state = .input(savedInput)
             } catch let e as CeiError {
+                activeTransport = nil
                 let traceId = appSpan?.context.traceId.hexString
                 switch e {
                 case .cardLost:        state = .input(savedInput)
@@ -132,6 +162,7 @@ final class CityHallAuthViewModel: ObservableObject {
                 default:               state = .error("card_error:\(e)", traceId: traceId)
                 }
             } catch {
+                activeTransport = nil
                 let traceId = appSpan?.context.traceId.hexString
                 state = .error("network:\(error.localizedDescription)", traceId: traceId)
             }
@@ -170,6 +201,72 @@ final class CityHallAuthViewModel: ObservableObject {
             )
             saveDialog = nil
         }
+    }
+
+    func onEmailChange(_ v: String) {
+        guard case .emailInput(var s) = state else { return }
+        s.email = v; state = .emailInput(s)
+    }
+
+    func onEmailRememberChange(_ v: Bool) {
+        guard case .emailInput(var s) = state else { return }
+        s.remember = v; state = .emailInput(s)
+    }
+
+    func submitEmail() {
+        guard case .emailInput(let s) = state, !s.email.isEmpty else { return }
+        if s.remember && !s.clientId.isEmpty {
+            EmailStore.remember(clientId: s.clientId, serviceName: input.serviceName, email: s.email)
+        }
+        var otp = OtpInput(email: s.email, clientId: s.clientId)
+        otp.remember = s.remember
+        state = .otpInput(otp)
+        try? activeTransport?.sendFrame(makeJson(["type": "email_submit", "email": s.email]))
+    }
+
+    func onOtpChange(_ v: String) {
+        guard case .otpInput(var s) = state else { return }
+        s.code = v; state = .otpInput(s)
+    }
+
+    func onOtpRememberChange(_ v: Bool) {
+        guard case .otpInput(var s) = state else { return }
+        s.remember = v; state = .otpInput(s)
+    }
+
+    func submitOtp() {
+        guard case .otpInput(let s) = state, s.code.count == 6 else { return }
+        if s.remember && !s.clientId.isEmpty {
+            EmailStore.remember(clientId: s.clientId, serviceName: input.serviceName, email: s.email)
+        }
+        try? activeTransport?.sendFrame(makeJson(["type": "email_otp", "code": s.code, "remember": s.remember]))
+    }
+
+    private func handleRelayFrame(type: String, frame: [String: Any]) {
+        switch type {
+        case "email_request":
+            let prefill  = frame["prefill"]   as? String
+            let clientId = frame["client_id"] as? String ?? ""
+            // If a remembered email exists for this client, silently resubmit it
+            if !clientId.isEmpty, let remembered = EmailStore.getRemembered(clientId: clientId) {
+                try? activeTransport?.sendFrame(makeJson(["type": "email_submit", "email": remembered]))
+            } else {
+                state = .emailInput(.init(prefill: prefill, clientId: clientId))
+            }
+        case "email_otp_sent":
+            let email: String; let clientId: String; let remember: Bool
+            if case .emailInput(let s) = state { email = s.email; clientId = s.clientId; remember = s.remember }
+            else if case .otpInput(let s) = state { email = s.email; clientId = s.clientId; remember = s.remember }
+            else { email = ""; clientId = ""; remember = false }
+            var otp = OtpInput(email: email, clientId: clientId)
+            otp.remember = remember
+            state = .otpInput(otp)
+        default: break
+        }
+    }
+
+    private func makeJson(_ dict: [String: Any]) -> String {
+        (try? String(data: JSONSerialization.data(withJSONObject: dict), encoding: .utf8)) ?? "{}"
     }
 
     func retry() {

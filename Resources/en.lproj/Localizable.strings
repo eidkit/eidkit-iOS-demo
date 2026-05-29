@@ -153,6 +153,28 @@
 "pdf_ok" = "OK";
 "pdf_fail" = "FAIL";
 
+/* Email verification */
+"label_email" = "Email address";
+"label_otp" = "Verification code (6 digits)";
+"email_input_hint" = "Enter the email address you want to associate with this service.";
+"otp_hint" = "We sent a 6-digit code to %@. Enter it below.";
+"email_remember" = "Remember for future logins";
+"action_continue" = "Continue";
+"action_verify" = "Verify";
+
+/* Saved data screen */
+"tab_saved" = "Saved Data";
+"saved_data_title" = "Saved Data";
+"saved_data_subtitle" = "Manage credentials and remembered emails stored on this device.";
+"saved_data_section_credentials" = "Credentials";
+"saved_data_section_emails" = "Remembered Emails";
+"saved_data_credentials_label" = "CAN, authentication PIN, signing PIN";
+"saved_data_field_saved" = "Saved";
+"saved_data_field_not_saved" = "Not saved";
+"saved_data_action_clear" = "Clear";
+"saved_data_action_forget" = "Forget";
+"saved_data_no_emails" = "No remembered emails.";
+
 /* Biometric save dialog */
 "bio_prompt_title" = "Quick biometric access";
 "bio_save_title" = "Quick biometric access";
