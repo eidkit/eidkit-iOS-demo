@@ -19,6 +19,10 @@ struct SavedDataScreen: View {
             .navigationTitle(String(localized: "saved_data_title"))
             .navigationBarTitleDisplayMode(.large)
         }
+        .onAppear {
+            hasCredentials = BiometricStore.hasCredentials()
+            emails = EmailStore.all()
+        }
     }
 
     // MARK: - Credentials

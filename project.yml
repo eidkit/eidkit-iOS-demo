@@ -32,7 +32,7 @@ schemes:
 packages:
   EidKit:
     url: https://github.com/eidkit/eidkit-ios-releases
-    exactVersion: "0.1.17"
+    exactVersion: "0.1.18"
   Sentry:
     url: https://github.com/getsentry/sentry-cocoa.git
     from: "8.0.0"
@@ -74,11 +74,11 @@ targets:
         UILaunchStoryboardName: LaunchScreen
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         com.apple.developer.nfc.readersession.iso7816.select-identifiers:
-          - A0000002471001                      # ICAO LDS applet — first so iOS auto-selects ICAO on connect
-          - A000000077030C60000000FE00000500    # National Application (AID1) 16-byte
-          - A000000077030C60000000FE0000050000  # National Application (AID1) 17-byte variant
-          - E828BD080FA0000001674544415441      # EDATA applet
-          - E828BD080FD25047656E65726963        # GenPKI applet
+          - A0000002471001 # ICAO LDS applet — first so iOS auto-selects ICAO on connect
+          - A000000077030C60000000FE00000500 # National Application (AID1) 16-byte
+          - A000000077030C60000000FE0000050000 # National Application (AID1) 17-byte variant
+          - E828BD080FA0000001674544415441 # EDATA applet
+          - E828BD080FD25047656E65726963 # GenPKI applet
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ro.eidkit.app

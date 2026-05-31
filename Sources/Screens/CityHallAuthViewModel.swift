@@ -218,7 +218,7 @@ final class CityHallAuthViewModel: ObservableObject {
         if s.remember && !s.clientId.isEmpty {
             EmailStore.remember(clientId: s.clientId, serviceName: input.serviceName, email: s.email)
         }
-        var otp = OtpInput(email: s.email, clientId: s.clientId)
+        var otp = CityHallAuthState.OtpInput(email: s.email, clientId: s.clientId)
         otp.remember = s.remember
         state = .otpInput(otp)
         try? activeTransport?.sendFrame(makeJson(["type": "email_submit", "email": s.email]))
@@ -247,8 +247,11 @@ final class CityHallAuthViewModel: ObservableObject {
         case "email_request":
             let prefill  = frame["prefill"]   as? String
             let clientId = frame["client_id"] as? String ?? ""
-            // If a remembered email exists for this client, silently resubmit it
+            // If a remembered email exists for this client, silently resubmit it.
+            // Still set emailInput state so that if the server requires OTP (e.g. DB has
+            // a different email from another device), the OTP screen shows the right address.
             if !clientId.isEmpty, let remembered = EmailStore.getRemembered(clientId: clientId) {
+                state = .emailInput(.init(prefill: remembered, clientId: clientId))
                 try? activeTransport?.sendFrame(makeJson(["type": "email_submit", "email": remembered]))
             } else {
                 state = .emailInput(.init(prefill: prefill, clientId: clientId))
@@ -258,7 +261,7 @@ final class CityHallAuthViewModel: ObservableObject {
             if case .emailInput(let s) = state { email = s.email; clientId = s.clientId; remember = s.remember }
             else if case .otpInput(let s) = state { email = s.email; clientId = s.clientId; remember = s.remember }
             else { email = ""; clientId = ""; remember = false }
-            var otp = OtpInput(email: email, clientId: clientId)
+            var otp = CityHallAuthState.OtpInput(email: email, clientId: clientId)
             otp.remember = remember
             state = .otpInput(otp)
         default: break
