@@ -211,6 +211,12 @@ private struct CityHallOtpInputContent: View {
                 .foregroundStyle(Color.white.opacity(0.6))
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+            if state.error {
+                Text(String(localized: "otp_invalid_error"))
+                    .font(.caption)
+                    .foregroundStyle(Color.errorRed)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             PinField(
                 label: String(localized: "label_otp"),
                 maxLength: 6,

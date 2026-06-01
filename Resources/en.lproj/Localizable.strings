@@ -158,6 +158,7 @@
 "label_otp" = "Verification code (6 digits)";
 "email_input_hint" = "Enter the email address you want to associate with this service.";
 "otp_hint" = "We sent a 6-digit code to %@. Enter it below.";
+"otp_invalid_error" = "Incorrect code. Please check and try again.";
 "email_remember" = "Remember for future logins";
 "action_continue" = "Continue";
 "action_verify" = "Verify";

@@ -47,6 +47,7 @@ enum CityHallAuthState {
         let clientId: String
         var code: String = ""
         var remember: Bool = false
+        var error: Bool = false
         init(email: String, clientId: String = "") { self.email = email; self.clientId = clientId }
     }
 }
@@ -226,7 +227,7 @@ final class CityHallAuthViewModel: ObservableObject {
 
     func onOtpChange(_ v: String) {
         guard case .otpInput(var s) = state else { return }
-        s.code = v; state = .otpInput(s)
+        s.code = v; s.error = false; state = .otpInput(s)
     }
 
     func onOtpRememberChange(_ v: Bool) {
@@ -264,6 +265,11 @@ final class CityHallAuthViewModel: ObservableObject {
             var otp = CityHallAuthState.OtpInput(email: email, clientId: clientId)
             otp.remember = remember
             state = .otpInput(otp)
+        case "email_otp_invalid":
+            guard case .otpInput(var s) = state else { break }
+            s.code = ""
+            s.error = true
+            state = .otpInput(s)
         default: break
         }
     }
