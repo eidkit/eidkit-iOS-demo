@@ -47,10 +47,16 @@ struct ErrorContent: View {
     var body: some View {
         let showContact = serverRejectionCodes.contains(message) || message.hasPrefix("generic:")
         ResultCard(title: localizedError(message), isError: true, onRetry: onRetry) {
-            if showContact, let tid = traceId {
-                Text(String(format: String(localized: "error_contact_us"), String(tid.prefix(16))))
-                    .font(.footnote)
-                    .foregroundStyle(Color.white.opacity(0.85))
+            if let tid = traceId {
+                if showContact {
+                    Text(String(format: String(localized: "error_contact_us"), String(tid.prefix(16))))
+                        .font(.footnote)
+                        .foregroundStyle(Color.white.opacity(0.85))
+                } else {
+                    Text(String(format: String(localized: "error_trace_ref"), String(tid.prefix(16))))
+                        .font(.footnote)
+                        .foregroundStyle(Color.white.opacity(0.5))
+                }
             }
         }
     }

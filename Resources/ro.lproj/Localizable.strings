@@ -197,4 +197,5 @@
 "error_generic" = "Eroare: %@";
 "error_server_rejection" = "Autentificare respinsă de server";
 "error_contact_us" = "Dacă crezi că e o eroare, contactează-ne: support@eidkit.ro\nReferință: %@";
+"error_trace_ref" = "Referință: %@";
 "error_nfc_unavailable" = "NFC nu este disponibil sau este dezactivat pe acest dispozitiv";
