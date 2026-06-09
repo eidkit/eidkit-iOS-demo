@@ -29,6 +29,8 @@
 "nfc_prompt_title" = "Hold card to phone";
 "nfc_prompt_body" = "Place the back of your Romanian ID against the NFC antenna";
 "nfc_card_connected_warning" = "Card detected — keep it still!";
+"nfc_alert_retry" = "Card lost — hold it to the back again";
+"nfc_card_lost_retry" = "Card moved away — hold it still and re-tap to retry";
 
 /* KYC screen */
 "kyc_title" = "KYC Read";

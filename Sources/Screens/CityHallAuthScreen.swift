@@ -141,6 +141,18 @@ private struct CityHallScanningContent: View {
 
     var body: some View {
         VStack(spacing: 10) {
+            if let msg = state.retryMessage {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(Color.red)
+                    Text(msg)
+                        .font(.caption)
+                        .foregroundStyle(Color.white.opacity(0.6))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 4)
+            }
             ForEach(Array(allSteps.enumerated()), id: \.offset) { _, step in
                 WizardStep(label: step.label, state: stepState(for: step))
             }
@@ -224,13 +236,6 @@ private struct CityHallOtpInputContent: View {
                 maskable: false,
                 onClear: { vm.onOtpChange("") }
             ) { }
-
-            Toggle(String(localized: "email_remember"), isOn: Binding(
-                get: { state.remember },
-                set: vm.onOtpRememberChange
-            ))
-            .font(.caption)
-            .foregroundStyle(Color.white.opacity(0.7))
 
             Button {
                 vm.submitOtp()

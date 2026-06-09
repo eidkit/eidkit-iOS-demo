@@ -83,11 +83,13 @@ struct EidKitApp: App
         else { return }
         let service     = components?.queryItems?.first(where: { $0.name == "service" })?.value ?? ""
         let traceparent = components?.queryItems?.first(where: { $0.name == "traceparent" })?.value
+        let mode        = components?.queryItems?.first(where: { $0.name == "mode" })?.value ?? "secure"
         cityHallInput = CityHallInput(
             sessionToken: session,
             wsUrl: wsUrl,
             serviceName: service,
-            traceparent: traceparent
+            traceparent: traceparent,
+            mode: mode
         )
     }
 

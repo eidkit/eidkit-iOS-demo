@@ -29,6 +29,8 @@
 "nfc_prompt_title" = "Apropie cardul de telefon";
 "nfc_prompt_body" = "Ține cartea de identitate la spatele telefonului, lângă antena NFC";
 "nfc_card_connected_warning" = "Card detectat — nu-l mișca!";
+"nfc_alert_retry" = "Card pierdut — ține-l din nou la spate";
+"nfc_card_lost_retry" = "Card pierdut — apropie-l din nou pentru a reîncerca";
 
 /* KYC screen */
 "kyc_title" = "Citire KYC";
