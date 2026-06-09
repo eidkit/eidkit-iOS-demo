@@ -42,6 +42,7 @@ enum CityHallAuthState {
         var completedSteps: [ReadEvent] = []
         var activeStep: ReadEvent? = nil
         var retryMessage: String? = nil
+        var isFastMode: Bool = false
     }
 
     struct EmailInput {
@@ -118,24 +119,21 @@ final class CityHallAuthViewModel: ObservableObject {
     func startScan(alertMessage: String) {
         guard case .input(let s) = state, s.canSubmit else { return }
         let savedInput = s
-        state = .scanning(.init())
+        state = .scanning(.init(isFastMode: input.isFastMode))
         scanTask?.cancel()
         scanTask = Task {
-            let appSpan: (any Span)? = parseTraceparent(input.traceparent).flatMap { spanCtx in
-                let tracer = OpenTelemetry.instance.tracerProvider.get(
-                    instrumentationName: "eidkit-app", instrumentationVersion: nil)
-                let span = tracer.spanBuilder(spanName: "remote_auth")
-                    .setSpanKind(spanKind: .internal)
-                    .setParent(spanCtx)
-                    .startSpan()
-                OpenTelemetry.instance.contextProvider.setActiveSpan(span)
-                return span
+            let tracer = OpenTelemetry.instance.tracerProvider.get(
+                instrumentationName: "eidkit-app", instrumentationVersion: nil)
+            let spanBuilder = tracer.spanBuilder(spanName: "remote_auth")
+                .setSpanKind(spanKind: .internal)
+            if let spanCtx = parseTraceparent(input.traceparent) {
+                spanBuilder.setParent(spanCtx)
             }
+            let appSpan = spanBuilder.startSpan()
+            OpenTelemetry.instance.contextProvider.setActiveSpan(appSpan)
             defer {
-                if let s = appSpan {
-                    s.end()
-                    OpenTelemetry.instance.contextProvider.removeContextForSpan(s)
-                }
+                appSpan.end()
+                OpenTelemetry.instance.contextProvider.removeContextForSpan(appSpan)
             }
             let maxRetries = 2
             var retryCount = 0
@@ -193,7 +191,7 @@ final class CityHallAuthViewModel: ObservableObject {
                     activeTransport = nil
                     if retryCount < maxRetries {
                         retryCount += 1
-                        state = .scanning(.init(retryMessage: String(localized: "nfc_card_lost_retry")))
+                        state = .scanning(.init(retryMessage: String(localized: "nfc_card_lost_retry"), isFastMode: input.isFastMode))
                         try? await Task.sleep(nanoseconds: 1_500_000_000)
                     } else {
                         state = .input(savedInput)
@@ -205,7 +203,7 @@ final class CityHallAuthViewModel: ObservableObject {
                     // On retry, more likely wrong CAN — go to error.
                     if retryCount == 0 {
                         retryCount += 1
-                        state = .scanning(.init(retryMessage: String(localized: "nfc_card_lost_retry")))
+                        state = .scanning(.init(retryMessage: String(localized: "nfc_card_lost_retry"), isFastMode: input.isFastMode))
                         try? await Task.sleep(nanoseconds: 1_500_000_000)
                     } else {
                         state = .input(savedInput)
@@ -213,7 +211,7 @@ final class CityHallAuthViewModel: ObservableObject {
                     }
                 } catch let e as CeiError {
                     activeTransport = nil
-                    let traceId = appSpan?.context.traceId.hexString
+                    let traceId = appSpan.context.traceId.hexString
                     switch e {
                     case .wrongPin(let r): state = .error("wrong_pin:\(r)", traceId: traceId)
                     case .pinBlocked:      state = .error("pin_blocked", traceId: traceId)
@@ -222,7 +220,7 @@ final class CityHallAuthViewModel: ObservableObject {
                     return
                 } catch {
                     activeTransport = nil
-                    let traceId = appSpan?.context.traceId.hexString
+                    let traceId = appSpan.context.traceId.hexString
                     state = .error("network:\(error.localizedDescription)", traceId: traceId)
                     return
                 }

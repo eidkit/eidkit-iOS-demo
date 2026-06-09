@@ -139,6 +139,11 @@ private struct CityHallScanningContent: View {
         .readingIdentity, .verifyingActiveAuth,
     ]
 
+    // In secure/relay mode, server drives steps 3-6 silently — show a pulse after PACE.
+    private var showServerProgress: Bool {
+        !state.isFastMode && state.completedSteps.contains(.establishingPace)
+    }
+
     var body: some View {
         VStack(spacing: 10) {
             if let msg = state.retryMessage {
@@ -155,6 +160,14 @@ private struct CityHallScanningContent: View {
             }
             ForEach(Array(allSteps.enumerated()), id: \.offset) { _, step in
                 WizardStep(label: step.label, state: stepState(for: step))
+            }
+            if showServerProgress {
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .tint(.white.opacity(0.5))
+                    .scaleEffect(0.7)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 4)
             }
         }
     }
