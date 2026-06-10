@@ -20,10 +20,12 @@ enum TelemetrySetup {
 
     // Single provider instance shared between EidKit and any direct app spans.
     static let provider: TracerProviderSdk = {
+        let sdkVersion = Bundle(for: EidKitSpanAdapter.self)
+            .infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
         let resource = Resource(attributes: [
             "service.name":           .string("eidkit-ios-demo"),
             "sdk.name":               .string("eidkit-ios"),
-            "sdk.version":            .string("0.1.17"),
+            "sdk.version":            .string(sdkVersion),
             "device.model":           .string(deviceModel),
             "device.os_version":      .string(osVersion),
             "nfc.tech":               .string("IsoDep"),
@@ -44,7 +46,7 @@ enum TelemetrySetup {
 
     /// Adapter that bridges EidKit's onSpan callback into the OTel provider.
     static let adapter = EidKitSpanAdapter(
-        tracer: provider.get(instrumentationName: "io.eidkit.sdk", instrumentationVersion: "0.1.10")
+        tracer: provider.get(instrumentationName: "io.eidkit.sdk", instrumentationVersion: nil)
     )
 
     /// Fires a single span on app start to verify the full OTel pipeline.
