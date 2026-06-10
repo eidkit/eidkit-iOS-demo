@@ -312,9 +312,11 @@ final class CityHallAuthViewModel: ObservableObject {
             // If a remembered email exists for this client, silently resubmit it.
             // Still set emailInput state so that if the server requires OTP (e.g. DB has
             // a different email from another device), the OTP screen shows the right address.
-            if !clientId.isEmpty, let remembered = EmailStore.getRemembered(clientId: clientId) {
+            let remembered = clientId.isEmpty ? nil : EmailStore.getRemembered(clientId: clientId)
+            let autoSubmit = remembered != nil && (prefill == nil || remembered!.lowercased() == prefill!.lowercased())
+            if autoSubmit {
                 state = .emailInput(.init(prefill: remembered, clientId: clientId))
-                try? activeTransport?.sendFrame(makeJson(["type": "email_submit", "email": remembered]))
+                try? activeTransport?.sendFrame(makeJson(["type": "email_submit", "email": remembered!]))
             } else {
                 state = .emailInput(.init(prefill: prefill, clientId: clientId))
             }
@@ -487,7 +489,9 @@ final class CityHallAuthViewModel: ObservableObject {
             fastSessionToken = input.sessionToken
             let prefill  = json["prefill"]   as? String
             let clientId = json["client_id"] as? String ?? ""
-            if !clientId.isEmpty, let remembered = EmailStore.getRemembered(clientId: clientId) {
+            let remembered = clientId.isEmpty ? nil : EmailStore.getRemembered(clientId: clientId)
+            let autoSubmit = remembered != nil && (prefill == nil || remembered!.lowercased() == prefill!.lowercased())
+            if autoSubmit {
                 state = .emailInput(.init(prefill: remembered, clientId: clientId))
                 await submitFastEmail()
             } else {
